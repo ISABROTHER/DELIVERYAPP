@@ -1,50 +1,145 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Dimensions, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, Dimensions, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { StepHeader } from '../components/StepHeader';
 import { PriceSummary } from '../components/PriceSummary';
 import { ContinueButton } from '../components/ContinueButton';
-import { useSendParcel } from '../context/SendParcelContext';
+import { useSendParcel, RecipientInfo } from '../context/SendParcelContext';
+import { ChevronDown, User, MapPin, Phone } from 'lucide-react-native';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
+const GHANA_REGIONS = [
+  'Ahafo', 'Ashanti', 'Bono', 'Bono East', 'Central', 'Eastern', 'Greater Accra', 
+  'Northern', 'North East', 'Oti', 'Savannah', 'Upper East', 'Upper West', 
+  'Volta', 'Western', 'Western North'
+].sort();
+
 export const Step4Recipient = ({ onNext }: { onNext: () => void }) => {
   const { recipient, updateRecipient } = useSendParcel();
-  const [name, setName] = useState(recipient?.name || '');
+
   const [phone, setPhone] = useState(recipient?.phone || '');
+  const [name, setName] = useState(recipient?.name || '');
   const [landmark, setLandmark] = useState(recipient?.landmark || '');
+  
+  // New fields to match Sender vibe
+  const [region, setRegion] = useState('');
+  const [city, setCity] = useState('');
+  const [area, setArea] = useState('');
+  const [showRegions, setShowRegions] = useState(false);
 
   const handleContinue = () => {
-    if (name && phone) {
-      updateRecipient({ name, phone, landmark: landmark || undefined });
+    if (name && phone && region && city && area) {
+      updateRecipient({ 
+        name, 
+        phone, 
+        landmark: landmark || undefined 
+      });
       onNext();
     }
   };
 
-  const canContinue = name.length > 2 && phone.length >= 10;
+  const isValid = phone.length >= 10 && name.length > 2 && region !== '' && city !== '' && area !== '';
 
   return (
-    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : 'height'}>
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollPadding}>
+    <KeyboardAvoidingView 
+      style={styles.container} 
+      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 0}
+    >
+      <ScrollView 
+        style={styles.content} 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={styles.scrollPadding}
+      >
         <StepHeader title="Recipient Details" subtitle="Who is receiving this parcel?" />
-        <View style={styles.card}>
+        
+        <View style={styles.form}>
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Recipient Name *</Text>
-            <TextInput style={styles.input} value={name} onChangeText={setName} placeholder="Enter recipient's name" placeholderTextColor="#9CA3AF" />
+            <View style={styles.labelRow}>
+              <Phone size={14} color="#6B7280" />
+              <Text style={styles.label}>Recipient Phone Number *</Text>
+            </View>
+            <TextInput 
+              style={styles.input} 
+              value={phone} 
+              onChangeText={setPhone} 
+              placeholder="e.g., 055XXXXXXX" 
+              keyboardType="phone-pad" 
+              placeholderTextColor="#9CA3AF" 
+            />
           </View>
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone Number *</Text>
-            <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="e.g., 055 000 0000" keyboardType="phone-pad" placeholderTextColor="#9CA3AF" />
+            <View style={styles.labelRow}>
+              <User size={14} color="#6B7280" />
+              <Text style={styles.label}>Recipient Full Name *</Text>
+            </View>
+            <TextInput 
+              style={styles.input} 
+              value={name} 
+              onChangeText={setName} 
+              placeholder="Enter recipient's name" 
+              placeholderTextColor="#9CA3AF" 
+            />
           </View>
+
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Specific Landmark (Optional)</Text>
-            <TextInput style={styles.input} value={landmark} onChangeText={setLandmark} placeholder="e.g., Yellow house near pharmacy" placeholderTextColor="#9CA3AF" />
+            <View style={styles.labelRow}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.label}>Region *</Text>
+            </View>
+            <Pressable style={styles.dropdownButton} onPress={() => setShowRegions(!showRegions)}>
+              <Text style={[styles.dropdownText, !region && styles.placeholder]}>
+                {region || 'Select region'}
+              </Text>
+              <ChevronDown size={20} color="#8E8E93" />
+            </Pressable>
+            {showRegions && (
+              <View style={styles.dropdown}>
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                  {GHANA_REGIONS.map((r) => (
+                    <Pressable key={r} style={styles.dropdownItem} onPress={() => { setRegion(r); setShowRegions(false); }}>
+                      <Text style={styles.dropdownItemText}>{r}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.row}>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>City *</Text>
+              <TextInput style={styles.input} value={city} onChangeText={setCity} placeholder="e.g. Kumasi" placeholderTextColor="#9CA3AF" />
+            </View>
+            <View style={[styles.inputGroup, styles.halfWidth]}>
+              <Text style={styles.label}>Area *</Text>
+              <TextInput style={styles.input} value={area} onChangeText={setArea} placeholder="e.g. Bantama" placeholderTextColor="#9CA3AF" />
+            </View>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <View style={styles.labelRow}>
+              <MapPin size={14} color="#6B7280" />
+              <Text style={styles.label}>Specific Landmark (Optional)</Text>
+            </View>
+            <TextInput 
+              style={styles.input} 
+              value={landmark} 
+              onChangeText={setLandmark} 
+              placeholder="e.g., Near the main gate" 
+              placeholderTextColor="#9CA3AF" 
+            />
           </View>
         </View>
+
         <PriceSummary />
+
+        {/* Continue is now at the end of information */}
+        <View style={styles.buttonWrapper}>
+          <ContinueButton onPress={handleContinue} disabled={!isValid} />
+        </View>
       </ScrollView>
-      <View style={styles.footer}>
-        <ContinueButton onPress={handleContinue} disabled={!canContinue} />
-      </View>
     </KeyboardAvoidingView>
   );
 };
@@ -52,10 +147,20 @@ export const Step4Recipient = ({ onNext }: { onNext: () => void }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
   content: { flex: 1 },
-  scrollPadding: { paddingBottom: 24 },
-  card: { marginHorizontal: 18, marginBottom: 20, padding: 16, backgroundColor: 'rgba(255,255,255,0.85)', borderRadius: 16, borderWidth: 1, borderColor: '#E5E5EA' },
+  scrollPadding: { paddingBottom: SCREEN_HEIGHT * 0.12 },
+  form: { paddingHorizontal: 18, marginBottom: 20 },
   inputGroup: { marginBottom: 16 },
-  label: { fontSize: 14, fontWeight: '700', color: '#6B7280', marginBottom: 8 },
-  input: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: 'rgba(0,0,0,0.08)', borderRadius: 12, padding: 14, fontSize: 15, fontWeight: '700', color: '#0B1220' },
-  footer: { paddingHorizontal: 18, paddingTop: 18, paddingBottom: SCREEN_HEIGHT * 0.08, backgroundColor: '#FFFFFF', borderTopWidth: 1, borderTopColor: '#E5E5EA' },
+  labelRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  label: { fontSize: 13, fontWeight: '800', color: '#0B1220' },
+  input: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: 'rgba(0,0,0,0.08)', borderRadius: 12, paddingHorizontal: 16, paddingVertical: 14, fontSize: 15, fontWeight: '600', color: '#0B1220' },
+  dropdownButton: { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: 'rgba(0,0,0,0.08)', borderRadius: 12, padding: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  dropdownText: { fontSize: 15, fontWeight: '700', color: '#0B1220' },
+  placeholder: { color: '#9CA3AF' },
+  dropdown: { marginTop: 8, backgroundColor: '#FFFFFF', borderRadius: 12, borderWidth: 1, borderColor: '#E5E5EA', maxHeight: 200 },
+  dropdownScroll: { maxHeight: 200 },
+  dropdownItem: { padding: 14, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
+  dropdownItemText: { fontSize: 15, fontWeight: '600', color: '#0B1220' },
+  row: { flexDirection: 'row', gap: 12 },
+  halfWidth: { flex: 1 },
+  buttonWrapper: { marginTop: 10 },
 });
