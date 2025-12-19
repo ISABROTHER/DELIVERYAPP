@@ -1,11 +1,7 @@
-import React, { useMemo, useState, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, Animated, Platform, UIManager } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
 import { useSendParcel } from '../context/SendParcelContext';
 import * as Haptics from 'expo-haptics';
-
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
-}
 
 const OPTIONS = [
   {
@@ -45,19 +41,9 @@ const OPTIONS = [
   },
 ] as const;
 
-// THEME: MATCHING PROFILE SIDE
-const BG = '#F2F2F7'; 
-const TEXT = '#111827';
-const MUTED = '#6B7280';
-const GREEN_TEXT = '#14532D';
-const LIGHT_GREEN = '#DCFCE7';
-const CARD_BORDER = 'rgba(60,60,67,0.18)';
-
 export const Step1Size = ({ onNext }: { onNext: () => void }) => {
-  const { parcel, updateParcel } = useSendParcel();
-  const [selectedId, setSelectedId] = useState<string | null>(parcel?.weightRange || null);
-  
-  const scale = useRef(new Animated.Value(1)).current;
+  const { updateParcel } = useSendParcel();
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const selectOption = (id: string) => {
     Haptics.selectionAsync();
@@ -68,24 +54,18 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
     updateParcel({
       weightRange: opt.id,
       size: opt.impliedSize,
-      category: undefined,
     });
 
-    // Auto-advance logic
-    setTimeout(() => onNext(), 250);
-  };
-
-  const handlePressIn = () => {
-    Animated.timing(scale, { toValue: 0.98, duration: 80, useNativeDriver: true }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }).start();
+    // Selecting an option triggers the roll-up of Step 2
+    setTimeout(() => {
+      onNext();
+      setSelectedId(null); // Reset selection so it's clean if we come back
+    }, 250);
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         
         <Text style={styles.backLabel}>Send</Text>
         <Text style={styles.title}>Parcel in Ghana</Text>
@@ -98,10 +78,8 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
             const isSelected = selectedId === o.id;
 
             return (
-              <Animated.View key={o.id} style={isSelected ? { transform: [{ scale }] } : null}>
+              <View key={o.id}>
                 <Pressable
-                  onPressIn={handlePressIn}
-                  onPressOut={handlePressOut}
                   onPress={() => selectOption(o.id)}
                   style={({ pressed }) => [
                     styles.row,
@@ -122,7 +100,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                   </View>
                 </Pressable>
                 {idx !== OPTIONS.length - 1 && <View style={styles.divider} />}
-              </Animated.View>
+              </View>
             );
           })}
         </View>
@@ -132,51 +110,22 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1, backgroundColor: '#F2F2F7' },
   scroll: { flex: 1 },
   content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 },
-
-  backLabel: { fontSize: 17, fontWeight: '600', color: GREEN_TEXT, marginBottom: 4 },
-  title: { fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1, marginBottom: 6 },
-  lead: { fontSize: 16, lineHeight: 22, fontWeight: '400', color: MUTED, marginBottom: 20 },
-
-  list: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    overflow: 'hidden',
-  },
-
-  row: { 
-    flexDirection: 'row', 
-    paddingVertical: 14, 
-    paddingHorizontal: 16, 
-    alignItems: 'center' 
-  },
+  backLabel: { fontSize: 17, fontWeight: '600', color: '#14532D', marginBottom: 4 },
+  title: { fontSize: 34, fontWeight: '800', color: '#111827', letterSpacing: -1, marginBottom: 6 },
+  lead: { fontSize: 16, lineHeight: 22, fontWeight: '400', color: '#6B7280', marginBottom: 20 },
+  list: { backgroundColor: '#FFFFFF', borderRadius: 14, borderWidth: 1, borderColor: 'rgba(60,60,67,0.18)', overflow: 'hidden' },
+  row: { flexDirection: 'row', paddingVertical: 14, paddingHorizontal: 16, alignItems: 'center' },
   rowPressed: { backgroundColor: 'rgba(0,0,0,0.04)' },
   rowSelected: { backgroundColor: '#F0FDF4' },
-
   left: { flex: 1, paddingRight: 12 },
-  rowTitle: { fontSize: 18, fontWeight: '700', color: TEXT, marginBottom: 4 },
-  bullet: { fontSize: 14, color: MUTED, lineHeight: 18, marginBottom: 1 },
-
+  rowTitle: { fontSize: 18, fontWeight: '700', color: '#111827', marginBottom: 4 },
+  bullet: { fontSize: 14, color: '#6B7280', lineHeight: 18, marginBottom: 1 },
   right: { width: 74, alignItems: 'flex-end', justifyContent: 'center' },
-  imageBox: {
-    width: 70, 
-    height: 70,
-    borderRadius: 12,
-    backgroundColor: LIGHT_GREEN,
-    alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
-  },
+  imageBox: { width: 70, height: 70, borderRadius: 12, backgroundColor: '#DCFCE7', alignItems: 'center', justifyContent: 'center' },
   image: { width: '80%', height: '80%' },
-  
-  divider: { 
-    height: 1, 
-    backgroundColor: CARD_BORDER, 
-    marginLeft: 16 
-  },
-  greenText: { color: GREEN_TEXT },
+  divider: { height: 1, backgroundColor: 'rgba(60,60,67,0.18)', marginLeft: 16 },
+  greenText: { color: '#14532D' },
 });
