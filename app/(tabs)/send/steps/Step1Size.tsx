@@ -81,7 +81,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
             const isSelected = weightRange === w.id;
             const isAnySelected = weightRange !== null;
             
-            // Modern UX: If another card is selected, this card "collapses" to a simple line
+            // Modern UX: If another card is selected, this card "collapses"
             const isCollapsed = isAnySelected && !isSelected;
 
             return (
@@ -108,7 +108,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                   )}
                 </View>
 
-                {/* Only show price details if expanded or selected */}
+                {/* Hide price tag for collapsed cards to save horizontal and vertical space */}
                 {!isCollapsed && (
                   <View style={[styles.priceTag, isSelected && styles.priceTagSelected]}>
                     <Text style={[styles.priceLabel, isSelected && styles.whiteText]}>From</Text>
@@ -124,7 +124,6 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
           })}
         </View>
 
-        {/* Following Sections slide up into view immediately */}
         {weightRange && (
           <View style={styles.section}>
             <Text style={styles.sectionLabel}>Package Size</Text>
@@ -235,11 +234,13 @@ const styles = StyleSheet.create({
   },
   cardSelected: { borderColor: GREEN },
   cardCollapsed: {
-    paddingVertical: 12,
+    paddingVertical: 10, // Slimmer vertical profile
     paddingHorizontal: 16,
     backgroundColor: '#F1F3F5',
     opacity: 0.7,
     borderWidth: 0,
+    shadowOpacity: 0, // Remove shadow for collapsed cards to emphasize depth of the selected one
+    elevation: 0,
   },
   cardInfo: { flex: 1 },
   cardTitle: { fontSize: 18, fontWeight: '800', color: TEXT, letterSpacing: -0.5 },
