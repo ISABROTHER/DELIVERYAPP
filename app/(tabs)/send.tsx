@@ -17,45 +17,21 @@ const TOTAL_STEPS = 7;
  
 const SendParcelFlow = () => {
   const { currentStep, setCurrentStep, reset } = useSendParcel();
-  
-  // Animation value starts at screen height (off-screen bottom)
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
-    // Animation to open the sheet from below
     Animated.spring(slideAnim, {
-      toValue: 0, // Slides to the bottom: 0 position (aligned with absolute bottom: 0)
+      toValue: 0,
       useNativeDriver: true,
       tension: 40,
       friction: 8,
     }).start();
   }, []);
 
-  const handleNext = () => {
-    if (currentStep < TOTAL_STEPS) {
-      setCurrentStep(currentStep + 1);
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 1) {
-      setCurrentStep(currentStep - 1);
-    }
-  };
-
+  const handleNext = () => currentStep < TOTAL_STEPS && setCurrentStep(currentStep + 1);
+  const handleBack = () => currentStep > 1 && setCurrentStep(currentStep - 1);
   const handleClose = () => {
-    // Slide down animation before resetting
-    Animated.timing(slideAnim, {
-      toValue: SCREEN_HEIGHT,
-      duration: 300,
-      useNativeDriver: true,
-    }).start(() => {
-      reset();
-    });
-  };
-
-  const handleComplete = () => {
-    reset();
+    Animated.timing(slideAnim, { toValue: SCREEN_HEIGHT, duration: 300, useNativeDriver: true }).start(() => reset());
   };
 
   const renderStep = () => {
@@ -66,31 +42,17 @@ const SendParcelFlow = () => {
       case 4: return <Step3Sender onNext={handleNext} />;
       case 5: return <Step4Recipient onNext={handleNext} />;
       case 6: return <Step5Summary onComplete={handleNext} />;
-      case 7: return <Step6SecureHandover onComplete={handleComplete} />;
+      case 7: return <Step6SecureHandover onComplete={reset} />;
       default: return <Step1Size onNext={handleNext} />;
     }
   };
 
   return (
     <View style={styles.overlay}>
-      <Animated.View 
-        style={[
-          styles.sheetContainer, 
-          { transform: [{ translateY: slideAnim }] }
-        ]}
-      >
+      <Animated.View style={[styles.sheetContainer, { transform: [{ translateY: slideAnim }] }]}>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-          {/* Visual "Handle" for the sheet/pop-up vibe */}
-          <View style={styles.handleContainer}>
-            <View style={styles.handle} />
-          </View>
-
-          <ProgressBar 
-            currentStep={currentStep} 
-            totalSteps={TOTAL_STEPS} 
-            onBack={handleBack}
-            onClose={handleClose}
-          />
+          <View style={styles.handleContainer}><View style={styles.handle} /></View>
+          <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} onBack={handleBack} onClose={handleClose} />
           <View style={styles.stepContainer}>{renderStep()}</View>
         </SafeAreaView>
       </Animated.View>
@@ -99,47 +61,18 @@ const SendParcelFlow = () => {
 };
 
 export default function SendScreen() {
-  return (
-    <SendParcelFlow />
-  );
+  return <SendParcelFlow />;
 }
 
 const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(11, 18, 32, 0.2)', // Dims the background behind the pop-up
-  },
+  overlay: { flex: 1, backgroundColor: 'rgba(11, 18, 32, 0.2)' },
   sheetContainer: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: SHEET_HEIGHT,
-    backgroundColor: '#F9FAFB',
-    borderTopLeftRadius: 32,
-    borderTopRightRadius: 32,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: -12 },
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    elevation: 30,
+    position: 'absolute', left: 0, right: 0, bottom: 0, height: SHEET_HEIGHT,
+    backgroundColor: '#F9FAFB', borderTopLeftRadius: 32, borderTopRightRadius: 32,
+    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 24, elevation: 30,
   },
-  safeArea: {
-    flex: 1,
-  },
-  handleContainer: {
-    width: '100%',
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  handle: {
-    width: 38,
-    height: 5,
-    backgroundColor: '#E5E7EB',
-    borderRadius: 3,
-  },
-  stepContainer: {
-    flex: 1,
-  },
+  safeArea: { flex: 1 },
+  handleContainer: { width: '100%', height: 24, alignItems: 'center', justifyContent: 'center' },
+  handle: { width: 38, height: 5, backgroundColor: '#E5E7EB', borderRadius: 3 },
+  stepContainer: { flex: 1 },
 });
