@@ -9,32 +9,36 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const OPTIONS = [
   {
-    id: '1-5kg',
-    title: 'Parcel up to 5 kg',
-    within: '35 × 25 × 12 cm',
-    bullets: ['Send from mailbox or parcel box', 'Compensation included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=5kg',
+    id: '0-4kg',
+    title: 'Parcel up to 4 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=4kg',
     impliedSize: 'small' as const,
   },
   {
-    id: '5-10kg',
-    title: 'Parcel up to 10 kg',
-    within: '120 × 60 × 60 cm',
-    bullets: ['Larger packages supported', 'Compensation included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=10kg',
+    id: '4-8kg',
+    title: 'Parcel up to 8 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=8kg',
     impliedSize: 'medium' as const,
   },
   {
-    id: '10-25kg',
-    title: 'Parcel up to 25 kg',
-    within: '120 × 60 × 60 cm',
-    bullets: ['Heavy parcels supported', 'Compensation included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25kg',
+    id: '8-16kg',
+    title: 'Parcel up to 16 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=16kg',
+    impliedSize: 'large' as const,
+  },
+  {
+    id: '16-32kg',
+    title: 'Parcel up to 32 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=32kg',
     impliedSize: 'large' as const,
   },
 ] as const;
 
-// THEME: MATCHING PROFILE SIDE + LIGHT GREEN ACCENTS
+// THEME: EXACT MATCH TO PROFILE SIDE (F2F2F7 BG + 60,60,67,0.18 BORDER)
 const BG = '#F2F2F7'; 
 const TEXT = '#111827';
 const MUTED = '#6B7280';
@@ -60,7 +64,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
       category: undefined,
     });
 
-    // Auto-advance after selection
+    // Auto-advance after selection to the next phase
     setTimeout(() => onNext(), 250);
   };
 
@@ -100,13 +104,12 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                 >
                   <View style={styles.left}>
                     <Text style={[styles.rowTitle, isSelected && styles.greenText]}>{o.title}</Text>
-                    <Text style={styles.rowWithin}>{o.within}</Text>
-
                     <Text style={styles.bullet}>• {o.bullets[0]}</Text>
                     <Text style={styles.bullet}>• {o.bullets[1]}</Text>
                   </View>
 
                   <View style={styles.right}>
+                    {/* PICTURE BOX ON LIGHT GREEN */}
                     <View style={styles.imageBox}>
                       <Image source={{ uri: o.imageUri }} style={styles.image} resizeMode="contain" />
                     </View>
@@ -141,7 +144,7 @@ const styles = StyleSheet.create({
 
   row: { 
     flexDirection: 'row', 
-    paddingVertical: 16, 
+    paddingVertical: 14, // Reduced height
     paddingHorizontal: 16, 
     alignItems: 'center' 
   },
@@ -149,20 +152,20 @@ const styles = StyleSheet.create({
   rowSelected: { backgroundColor: '#F0FDF4' },
 
   left: { flex: 1, paddingRight: 12 },
-  rowTitle: { fontSize: 18, fontWeight: '700', color: TEXT, marginBottom: 2 },
-  rowWithin: { fontSize: 14, fontWeight: '600', color: TEXT, marginBottom: 6 },
+  rowTitle: { fontSize: 18, fontWeight: '700', color: TEXT, marginBottom: 4 },
   bullet: { fontSize: 14, color: MUTED, lineHeight: 18, marginBottom: 1 },
 
-  right: { width: 84, alignItems: 'flex-end', justifyContent: 'center' },
+  right: { width: 74, alignItems: 'flex-end', justifyContent: 'center' },
   imageBox: {
-    width: 80,
-    height: 80,
+    width: 70, // Smaller picture box for height reduction
+    height: 70,
     borderRadius: 12,
     backgroundColor: LIGHT_GREEN,
     alignItems: 'center',
     justifyContent: 'center',
+    overflow: 'hidden',
   },
-  image: { width: '75%', height: '75%' },
+  image: { width: '80%', height: '80%' },
   
   divider: { 
     height: 1, 
