@@ -9,50 +9,36 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const OPTIONS = [
   {
-    id: 'up-to-5kg',
-    title: 'Parcel up to 5 kg',
+    id: 'up-to-4kg',
+    title: 'Parcel up to 4 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=5kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=4kg',
     impliedSize: 'small' as const,
   },
   {
-    id: 'up-to-10kg',
-    title: 'Parcel up to 10 kg',
+    id: 'up-to-8kg',
+    title: 'Parcel up to 8 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=10kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=8kg',
     impliedSize: 'medium' as const,
   },
   {
-    id: 'up-to-15kg',
-    title: 'Parcel up to 15 kg',
+    id: 'up-to-16kg',
+    title: 'Parcel up to 16 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=15kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=16kg',
     impliedSize: 'large' as const,
   },
   {
-    id: 'up-to-20kg',
-    title: 'Parcel up to 20 kg',
+    id: 'over-25kg',
+    title: 'Parcel over 25 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=20kg',
-    impliedSize: 'large' as const,
-  },
-  {
-    id: 'up-to-25kg',
-    title: 'Parcel up to 25 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25kg',
-    impliedSize: 'large' as const,
-  },
-  {
-    id: 'up-to-30kg',
-    title: 'Parcel up to 30 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=30kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25%2Bkg',
     impliedSize: 'large' as const,
   },
 ] as const;
 
-// THEME: ALIGNED WITH PROFILE SIDE
+// THEME: MATCHING PROFILE SIDE
 const BG = '#F2F2F7'; 
 const TEXT = '#111827';
 const MUTED = '#6B7280';
@@ -78,7 +64,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
       category: undefined,
     });
 
-    // Auto-advance logic for testing stage speed
+    // Auto-advance logic
     setTimeout(() => onNext(), 250);
   };
 
@@ -123,7 +109,6 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                   </View>
 
                   <View style={styles.right}>
-                    {/* PICTURE BOX ON LIGHT GREEN */}
                     <View style={styles.imageBox}>
                       <Image source={{ uri: o.imageUri }} style={styles.image} resizeMode="contain" />
                     </View>
@@ -142,7 +127,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 30 },
+  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 },
 
   backLabel: { fontSize: 17, fontWeight: '600', color: GREEN_TEXT, marginBottom: 4 },
   title: { fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1, marginBottom: 6 },
