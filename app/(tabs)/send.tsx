@@ -12,21 +12,21 @@ import { Step5Summary } from './send/steps/Step5Summary';
 import { Step6SecureHandover } from './send/steps/Step6SecureHandover';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.95; 
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.95; // Leaves 5% gap at the top
 const TOTAL_STEPS = 7;
  
 const SendParcelFlow = () => {
   const { currentStep, setCurrentStep, reset } = useSendParcel();
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
-  // Watch the currentStep. If it goes past 1, slide up. If it's 1, slide down.
+  // Animation logic: Roll up for Steps 2-7, Roll down for Step 1
   useEffect(() => {
     if (currentStep > 1) {
       Animated.spring(slideAnim, {
         toValue: 0,
         useNativeDriver: true,
-        tension: 40,
-        friction: 8,
+        tension: 45,
+        friction: 9,
       }).start();
     } else {
       Animated.timing(slideAnim, {
@@ -50,7 +50,7 @@ const SendParcelFlow = () => {
   };
 
   const handleClose = () => {
-    // This will trigger the useEffect to slide the sheet down
+    // Resetting currentStep to 1 will trigger the slide-down animation
     reset();
   };
 
@@ -68,14 +68,28 @@ const SendParcelFlow = () => {
 
   return (
     <View style={styles.container}>
-      {/* STEP 1: The Static Base Layer (Always there) */}
+      {/* STEP 1: Always in the background */}
       <View style={styles.baseLayer}>
         <SafeAreaView style={{ flex: 1 }} edges={['top']}>
           <Step1Size onNext={handleNext} />
         </SafeAreaView>
       </View>
 
-      {/* STEPS 2-7: The Animated Roll-up Sheet */}
+      {/* DIMMING EFFECT: Fades in/out based on the sheet position (Steps 2-7) */}
+      <Animated.View 
+        style={[
+          styles.dimmingOverlay,
+          {
+            opacity: slideAnim.interpolate({
+              inputRange: [0, SCREEN_HEIGHT],
+              outputRange: [1, 0], // Fully visible when sheet is up (0), invisible when down
+            })
+          }
+        ]}
+        pointerEvents="none"
+      />
+
+      {/* POP-UP SHEET: Steps 2-7 */}
       <Animated.View 
         style={[
           styles.sheetContainer, 
@@ -83,6 +97,7 @@ const SendParcelFlow = () => {
         ]}
       >
         <SafeAreaView style={styles.safeArea} edges={['top']}>
+          {/* Visual Handle for the Pop-up Vibe */}
           <View style={styles.handleContainer}>
             <View style={styles.handle} />
           </View>
@@ -101,7 +116,9 @@ const SendParcelFlow = () => {
 };
 
 export default function SendScreen() {
-  return <SendParcelFlow />;
+  return (
+    <SendParcelFlow />
+  );
 }
 
 const styles = StyleSheet.create({
@@ -111,7 +128,10 @@ const styles = StyleSheet.create({
   },
   baseLayer: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: '#F2F2F7',
+  },
+  dimmingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.45)', // Adjust this to make it darker or lighter
   },
   sheetContainer: {
     position: 'absolute',
