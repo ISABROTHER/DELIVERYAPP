@@ -12,7 +12,8 @@ import { Step5Summary } from './send/steps/Step5Summary';
 import { Step6SecureHandover } from './send/steps/Step6SecureHandover';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const SHEET_HEIGHT = SCREEN_HEIGHT * 0.95; // Leaves 5% gap at the top
+const TAB_BAR_HEIGHT = 78;
+const SHEET_HEIGHT = SCREEN_HEIGHT * 0.95; // 5% top gap
 const TOTAL_STEPS = 7;
  
 const SendParcelFlow = () => {
@@ -20,6 +21,7 @@ const SendParcelFlow = () => {
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
 
   useEffect(() => {
+    // Animation: Roll up from below
     Animated.spring(slideAnim, {
       toValue: 0,
       useNativeDriver: true,
@@ -48,11 +50,17 @@ const SendParcelFlow = () => {
   };
 
   return (
-    <View style={styles.overlay}>
+    <View style={styles.pageContainer}>
+      {/* Background stays still, only steps roll up */}
       <Animated.View style={[styles.sheetContainer, { transform: [{ translateY: slideAnim }] }]}>
         <SafeAreaView style={styles.safeArea} edges={['top']}>
           <View style={styles.handleContainer}><View style={styles.handle} /></View>
-          <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} onBack={handleBack} onClose={handleClose} />
+          <ProgressBar 
+            currentStep={currentStep} 
+            totalSteps={TOTAL_STEPS} 
+            onBack={handleBack} 
+            onClose={handleClose} 
+          />
           <View style={styles.stepContainer}>{renderStep()}</View>
         </SafeAreaView>
       </Animated.View>
@@ -65,14 +73,26 @@ export default function SendScreen() {
 }
 
 const styles = StyleSheet.create({
-  overlay: { flex: 1, backgroundColor: 'rgba(11, 18, 32, 0.2)' },
+  pageContainer: {
+    flex: 1,
+    backgroundColor: '#F2F2F7', // Matches your profile/home background vibe
+  },
   sheetContainer: {
-    position: 'absolute', left: 0, right: 0, bottom: 0, height: SHEET_HEIGHT,
-    backgroundColor: '#F9FAFB', borderTopLeftRadius: 32, borderTopRightRadius: 32,
-    shadowColor: '#000', shadowOpacity: 0.15, shadowRadius: 24, elevation: 30,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: SHEET_HEIGHT,
+    backgroundColor: '#F9FAFB',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    shadowColor: '#000',
+    shadowOpacity: 0.15,
+    shadowRadius: 20,
+    elevation: 25,
   },
   safeArea: { flex: 1 },
-  handleContainer: { width: '100%', height: 24, alignItems: 'center', justifyContent: 'center' },
-  handle: { width: 38, height: 5, backgroundColor: '#E5E7EB', borderRadius: 3 },
+  handleContainer: { width: '100%', height: 20, alignItems: 'center', justifyContent: 'center', paddingTop: 8 },
+  handle: { width: 40, height: 5, backgroundColor: '#E5E7EB', borderRadius: 3 },
   stepContainer: { flex: 1 },
 });
