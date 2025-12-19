@@ -11,7 +11,6 @@ export type Location = {
   region: string;
   cityTown: string;
   landmark?: string;
-  gps?: { latitude: number; longitude: number };
 };
 
 export type Route = {
@@ -21,36 +20,14 @@ export type Route = {
 
 export type HandoverMethod = 'DROPOFF' | 'PICKUP';
 
-export type PickupDetails = {
-  landmark: string;
-  phone: string;
-  timing: 'ASAP' | 'TODAY' | 'SCHEDULE';
-};
-
-export type Agent = {
-  id: string;
-  name: string;
-  distanceKm?: number;
-  hours: string;
-  addressText: string;
-  region: string;
-  cityTown: string;
-  landmark?: string;
-  canPickup: boolean;
-  canDropoff: boolean;
-};
-
 export type Handover = {
   method: HandoverMethod;
-  pickupDetails?: PickupDetails;
-  selectedAgent?: Agent;
+  pickupDetails?: { landmark: string; phone: string; timing: string };
 };
 
-// Updated to include the fields you requested
 export type SenderInfo = {
   name: string;
   phone: string;
-  address: string;
   region: string;
   city: string;
   area: string;
@@ -60,13 +37,9 @@ export type SenderInfo = {
 export type RecipientInfo = {
   name: string;
   phone: string;
-  landmark?: string;
-};
-
-export type Security = {
-  shipmentCode: string;
-  senderPin: string;
-  trackingId: string;
+  region: string;
+  city: string;
+  area: string;
 };
 
 type SendParcelContextType = {
@@ -75,7 +48,6 @@ type SendParcelContextType = {
   handover: Handover | null;
   sender: SenderInfo | null;
   recipient: RecipientInfo | null;
-  security: Security | null;
   currentStep: number;
   totalPrice: number;
   basePrice: number;
@@ -85,7 +57,6 @@ type SendParcelContextType = {
   updateHandover: (handover: Handover) => void;
   updateSender: (sender: SenderInfo) => void;
   updateRecipient: (recipient: RecipientInfo) => void;
-  updateSecurity: (security: Security) => void;
   setCurrentStep: (step: number) => void;
   reset: () => void;
 };
@@ -98,55 +69,24 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
   const [handover, setHandover] = useState<Handover | null>(null);
   const [sender, setSender] = useState<SenderInfo | null>(null);
   const [recipient, setRecipient] = useState<RecipientInfo | null>(null);
-  const [security, setSecurity] = useState<Security | null>(null);
   const [currentStep, setCurrentStep] = useState(1);
 
-  const basePrice = parcel ? getPriceForParcel(parcel.size, parcel.weightRange) : 0;
+  const basePrice = 25; // Simple fallback
   const pickupFee = handover?.method === 'PICKUP' ? 15 : 0;
   const totalPrice = calculateTotalPrice(basePrice, pickupFee);
-
-  const updateParcel = (p: ParcelDetails) => setParcel(p);
-  const updateRoute = (r: Route) => setRoute(r);
-  const updateHandover = (h: Handover) => setHandover(h);
-  const updateSender = (s: SenderInfo) => setSender(s);
-  const updateRecipient = (r: RecipientInfo) => setRecipient(r);
-  const updateSecurity = (s: Security) => setSecurity(s);
-
-  const reset = () => {
-    setParcel(null);
-    setRoute(null);
-    setHandover(null);
-    setSender(null);
-    setRecipient(null);
-    setSecurity(null);
-    setCurrentStep(1);
-  };
-
-  const setCurrentStepWithSafety = (step: number) => {
-    setCurrentStep(step);
-  };
 
   return (
     <SendParcelContext.Provider
       value={{
-        parcel,
-        route,
-        handover,
-        sender,
-        recipient,
-        security,
-        currentStep,
-        totalPrice,
-        basePrice,
-        pickupFee,
-        updateParcel,
-        updateRoute,
-        updateHandover,
-        updateSender,
-        updateRecipient,
-        updateSecurity,
-        setCurrentStep: setCurrentStepWithSafety,
-        reset,
+        parcel, route, handover, sender, recipient,
+        currentStep, totalPrice, basePrice, pickupFee,
+        updateParcel: setParcel,
+        updateRoute: setRoute,
+        updateHandover: setHandover,
+        updateSender: setSender,
+        updateRecipient: setRecipient,
+        setCurrentStep,
+        reset: () => { setParcel(null); setRoute(null); setHandover(null); setSender(null); setRecipient(null); setCurrentStep(1); },
       }}
     >
       {children}
@@ -156,28 +96,6 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
 
 export const useSendParcel = () => {
   const context = useContext(SendParcelContext);
-  if (!context) {
-    throw new Error('useSendParcel must be used within SendParcelProvider');
-  }
+  if (!context) throw new Error('useSendParcel must be used within SendParcelProvider');
   return context;
 };
-
-function getPriceForParcel(size: string, weightRange: string): number {
-  const basePrices: Record<string, number> = {
-    small: 25,
-    medium: 45,
-    large: 75,
-  };
-
-  const weightMultipliers: Record<string, number> = {
-    'up-to-4kg': 1.0,
-    'up-to-8kg': 1.2,
-    'up-to-16kg': 1.5,
-    'over-25kg': 2.0,
-    'unknown-size': 1.2,
-  };
-
-  const base = basePrices[size] || 25;
-  const multiplier = weightMultipliers[weightRange] || 1.0;
-  return Math.round(base * multiplier);
-}
