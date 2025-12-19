@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { View, StyleSheet, Pressable } from 'react-native';
 import { ChevronLeft, X } from 'lucide-react-native';
 
 type ProgressBarProps = {
@@ -24,9 +24,13 @@ export const ProgressBar = ({ currentStep, totalSteps, onBack, onClose }: Progre
           )}
         </View>
 
-        <Text style={styles.stepText}>
-          Step {currentStep} of {totalSteps}
-        </Text>
+        {/* Tiny step indicator instead of bulky text */}
+        <View style={styles.stepIndicator}>
+          <View style={styles.dot} />
+          <View style={styles.dot} />
+          <View style={[styles.dot, { backgroundColor: '#34B67A', width: 12 }]} />
+          <View style={styles.dot} />
+        </View>
 
         <View style={styles.rightAction}>
           <Pressable onPress={onClose} style={styles.iconButton}>
@@ -44,43 +48,38 @@ export const ProgressBar = ({ currentStep, totalSteps, onBack, onClose }: Progre
 
 const styles = StyleSheet.create({
   container: {
-    paddingHorizontal: 18,
-    paddingVertical: 8, // Slimmer vertical padding
-    backgroundColor: 'transparent', // Blends better with the sheet
+    paddingHorizontal: 20,
+    paddingVertical: 4,
+    backgroundColor: 'transparent',
   },
   headerRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: 8,
+    height: 32,
   },
-  leftAction: {
-    width: 32,
-    alignItems: 'flex-start',
+  leftAction: { width: 32 },
+  rightAction: { width: 32, alignItems: 'flex-end' },
+  iconButton: { padding: 4 },
+  stepIndicator: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
   },
-  rightAction: {
-    width: 32,
-    alignItems: 'flex-end',
-  },
-  iconButton: {
-    padding: 2,
-  },
-  stepText: {
-    fontSize: 12, // More compact text
-    fontWeight: '800',
-    color: '#0B1220',
-    textTransform: 'uppercase',
-    letterSpacing: 0.5,
+  dot: {
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: '#E5E7EB',
   },
   barContainer: {
-    height: 4, // Slimmer bar
+    height: 2,
     backgroundColor: 'rgba(52,182,122,0.1)',
-    borderRadius: 2,
+    borderRadius: 1,
     overflow: 'hidden',
   },
   barFill: {
     height: '100%',
     backgroundColor: '#34B67A',
-    borderRadius: 2,
   },
 });
