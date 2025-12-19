@@ -59,7 +59,6 @@ export const Step2Route = ({ onNext }: { onNext: () => void }) => {
           subtitle="Where is the parcel coming from and going to?"
         />
 
-        {/* Origin Section */}
         <View style={styles.routeCard}>
           <View style={styles.routeHeader}>
             <MapPin size={20} color="#34B67A" />
@@ -103,7 +102,7 @@ export const Step2Route = ({ onNext }: { onNext: () => void }) => {
               style={styles.input}
               value={originCity}
               onChangeText={setOriginCity}
-              placeholder="e.g., Accra, Kumasi"
+              placeholder="e.g., Accra"
               placeholderTextColor="#9CA3AF"
             />
           </View>
@@ -120,7 +119,6 @@ export const Step2Route = ({ onNext }: { onNext: () => void }) => {
           </View>
         </View>
 
-        {/* Destination Section */}
         <View style={styles.routeCard}>
           <View style={styles.routeHeader}>
             <Navigation size={20} color="#34B67A" />
@@ -164,7 +162,7 @@ export const Step2Route = ({ onNext }: { onNext: () => void }) => {
               style={styles.input}
               value={destCity}
               onChangeText={setDestCity}
-              placeholder="e.g., Takoradi, Tema"
+              placeholder="e.g., Kumasi"
               placeholderTextColor="#9CA3AF"
             />
           </View>
@@ -192,12 +190,12 @@ export const Step2Route = ({ onNext }: { onNext: () => void }) => {
             </Text>
           </View>
         )}
-      </ScrollView>
 
-      {/* FOOTER: Fixed at bottom with extra padding to avoid screen cut-off */}
-      <View style={styles.footer}>
-        <ContinueButton onPress={handleContinue} disabled={!canContinue} />
-      </View>
+        {/* Continue is now at the end of information */}
+        <View style={styles.buttonWrapper}>
+          <ContinueButton onPress={handleContinue} disabled={!canContinue} />
+        </View>
+      </ScrollView>
     </View>
   );
 };
@@ -211,7 +209,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollPadding: {
-    paddingBottom: 24,
+    paddingBottom: SCREEN_HEIGHT * 0.12, // Leave space at bottom for Tab Bar vibe
   },
   routeCard: {
     marginHorizontal: 18,
@@ -277,7 +275,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     maxHeight: 200,
-    zIndex: 10,
   },
   dropdownScroll: {
     maxHeight: 200,
@@ -314,13 +311,7 @@ const styles = StyleSheet.create({
     color: '#34B67A',
     marginVertical: 4,
   },
-  footer: {
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    // Adds roughly 10% of screen height in padding to ensure it's not hidden
-    paddingBottom: SCREEN_HEIGHT * 0.08, 
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+  buttonWrapper: {
+    marginTop: 10,
   },
 });
