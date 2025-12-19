@@ -4,26 +4,29 @@ import { useSendParcel } from '../context/SendParcelContext';
 import { formatPrice } from '../config/pricing';
 
 export const PriceSummary = () => {
-  const { selectedSize, selectedDeliveryMethod, totalPrice } = useSendParcel();
+  const { parcel, handover, totalPrice } = useSendParcel();
 
-  if (!selectedSize) return null;
+  if (!parcel) return null;
+
+  // Capitalize size for display
+  const sizeLabel = parcel.size.charAt(0).toUpperCase() + parcel.size.slice(1);
 
   return (
     <View style={styles.container}>
       <View style={styles.row}>
-        <Text style={styles.label}>Parcel</Text>
-        <Text style={styles.value}>{selectedSize.label}</Text>
+        <Text style={styles.label}>Parcel Size</Text>
+        <Text style={styles.value}>{sizeLabel}</Text>
       </View>
 
-      {selectedDeliveryMethod && selectedDeliveryMethod.additionalCost > 0 && (
+      {handover?.method === 'PICKUP' && (
         <View style={styles.row}>
-          <Text style={styles.label}>{selectedDeliveryMethod.label}</Text>
-          <Text style={styles.value}>{formatPrice(selectedDeliveryMethod.additionalCost)}</Text>
+          <Text style={styles.label}>Pickup Fee</Text>
+          <Text style={styles.value}>{formatPrice(15)}</Text>
         </View>
       )}
 
       <View style={[styles.row, styles.totalRow]}>
-        <Text style={styles.totalLabel}>Total</Text>
+        <Text style={styles.totalLabel}>Estimated Total</Text>
         <Text style={styles.totalValue}>{formatPrice(totalPrice)}</Text>
       </View>
     </View>
