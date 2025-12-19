@@ -17,14 +17,8 @@ const BAR_BG = 'rgba(255,255,255,0.92)';
 const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { currentStep } = useSendParcel();
-  const focusedRoute = state.routes[state.index];
-  const focusedRouteName = focusedRoute.name;
-
-  // Only hide the tab bar if we are on the 'send' tab AND past Step 1
-  if (focusedRouteName === 'send' && currentStep > 1) {
-    return null;
-  }
+  // We no longer hide the tab bar based on steps. 
+  // It will now stay visible for all steps of the Send flow.
 
   return (
     <View style={styles.tabBarWrap} accessibilityRole="tablist">
