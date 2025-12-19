@@ -9,36 +9,50 @@ if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental
 
 const OPTIONS = [
   {
-    id: '0-4kg',
-    title: 'Parcel up to 4 kg',
+    id: 'up-to-5kg',
+    title: 'Parcel up to 5 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=4kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=5kg',
     impliedSize: 'small' as const,
   },
   {
-    id: '4-8kg',
-    title: 'Parcel up to 8 kg',
+    id: 'up-to-10kg',
+    title: 'Parcel up to 10 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=8kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=10kg',
     impliedSize: 'medium' as const,
   },
   {
-    id: '8-16kg',
-    title: 'Parcel up to 16 kg',
+    id: 'up-to-15kg',
+    title: 'Parcel up to 15 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=16kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=15kg',
     impliedSize: 'large' as const,
   },
   {
-    id: '16-32kg',
-    title: 'Parcel up to 32 kg',
+    id: 'up-to-20kg',
+    title: 'Parcel up to 20 kg',
     bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=32kg',
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=20kg',
+    impliedSize: 'large' as const,
+  },
+  {
+    id: 'up-to-25kg',
+    title: 'Parcel up to 25 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25kg',
+    impliedSize: 'large' as const,
+  },
+  {
+    id: 'up-to-30kg',
+    title: 'Parcel up to 30 kg',
+    bullets: ['Send from anywhere', 'Insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=30kg',
     impliedSize: 'large' as const,
   },
 ] as const;
 
-// THEME: EXACT MATCH TO PROFILE SIDE (F2F2F7 BG + 60,60,67,0.18 BORDER)
+// THEME: ALIGNED WITH PROFILE SIDE
 const BG = '#F2F2F7'; 
 const TEXT = '#111827';
 const MUTED = '#6B7280';
@@ -64,7 +78,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
       category: undefined,
     });
 
-    // Auto-advance after selection to the next phase
+    // Auto-advance logic for testing stage speed
     setTimeout(() => onNext(), 250);
   };
 
@@ -128,7 +142,7 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 20 },
+  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 30 },
 
   backLabel: { fontSize: 17, fontWeight: '600', color: GREEN_TEXT, marginBottom: 4 },
   title: { fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1, marginBottom: 6 },
@@ -144,7 +158,7 @@ const styles = StyleSheet.create({
 
   row: { 
     flexDirection: 'row', 
-    paddingVertical: 14, // Reduced height
+    paddingVertical: 14, 
     paddingHorizontal: 16, 
     alignItems: 'center' 
   },
@@ -157,7 +171,7 @@ const styles = StyleSheet.create({
 
   right: { width: 74, alignItems: 'flex-end', justifyContent: 'center' },
   imageBox: {
-    width: 70, // Smaller picture box for height reduction
+    width: 70, 
     height: 70,
     borderRadius: 12,
     backgroundColor: LIGHT_GREEN,
