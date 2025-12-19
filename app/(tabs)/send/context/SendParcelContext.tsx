@@ -1,4 +1,4 @@
- import React, { createContext, useContext, useState, ReactNode } from 'react';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { calculateTotalPrice } from '../config/pricing';
 
 export type ParcelDetails = {
@@ -46,9 +46,15 @@ export type Handover = {
   selectedAgent?: Agent;
 };
 
+// Updated to include the fields you requested
 export type SenderInfo = {
   name: string;
   phone: string;
+  address: string;
+  region: string;
+  city: string;
+  area: string;
+  email: string;
 };
 
 export type RecipientInfo = {
@@ -116,6 +122,10 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
     setCurrentStep(1);
   };
 
+  const setCurrentStepWithSafety = (step: number) => {
+    setCurrentStep(step);
+  };
+
   return (
     <SendParcelContext.Provider
       value={{
@@ -135,7 +145,7 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
         updateSender,
         updateRecipient,
         updateSecurity,
-        setCurrentStep,
+        setCurrentStep: setCurrentStepWithSafety,
         reset,
       }}
     >
@@ -160,10 +170,11 @@ function getPriceForParcel(size: string, weightRange: string): number {
   };
 
   const weightMultipliers: Record<string, number> = {
-    '0-1kg': 1.0,
-    '1-5kg': 1.2,
-    '5-10kg': 1.5,
-    '10-25kg': 2.0,
+    'up-to-4kg': 1.0,
+    'up-to-8kg': 1.2,
+    'up-to-16kg': 1.5,
+    'over-25kg': 2.0,
+    'unknown-size': 1.2,
   };
 
   const base = basePrices[size] || 25;
