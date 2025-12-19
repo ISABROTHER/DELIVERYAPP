@@ -34,6 +34,7 @@ const SendParcelFlow = () => {
   };
 
   const handleComplete = () => {
+    reset();
     setCurrentStep(1);
   };
 
@@ -85,4 +86,4 @@ const styles = StyleSheet.create({
   stepContainer: {
     flex: 1,
   },
-}); 
+});
