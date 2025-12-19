@@ -17,15 +17,7 @@ const BAR_BG = 'rgba(255,255,255,0.92)';
 const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const { currentStep } = useSendParcel();
-  const focusedRoute = state.routes[state.index];
-  const focusedRouteName = focusedRoute.name;
-
-  // Hide the bottom bar ONLY if we are on 'send' and past Step 1
-  if (focusedRouteName === 'send' && currentStep > 1) {
-    return null;
-  }
-
+  // We NO LONGER hide the tab bar. The buttons will always be there.
   return (
     <View style={styles.tabBarWrap} accessibilityRole="tablist">
       <View pointerEvents="none" style={styles.tabBarSurface} />
@@ -35,7 +27,6 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           const { options } = descriptors[route.key];
           const label = options.tabBarLabel ?? options.title ?? route.name;
           const color = focused ? GREEN : INACTIVE;
-
           const icon = options.tabBarIcon?.({ focused, color, size: 22 }) ?? null;
 
           const onPress = () => {
