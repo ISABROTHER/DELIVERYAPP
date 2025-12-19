@@ -11,15 +11,16 @@ import {
 } from 'react-native';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { ChevronRight } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
 import { useSendParcel } from '../context/SendParcelContext';
 import { formatPrice } from '../config/pricing';
 
+// Enable LayoutAnimation for Android
 if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
   UIManager.setLayoutAnimationEnabledExperimental(true);
 }
 
-// COLORS - Matching the Profile Side (Red Accents)
+// --- DESIGN TOKENS (MATCHING PROFILE) ---
 const BG = '#F2F2F7'; 
 const TEXT = '#111827';
 const MUTED = '#6B7280';
@@ -53,9 +54,10 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
 
   const selectedWeightMeta = useMemo(() => WEIGHT_RANGES.find((w) => w.id === weightRange), [weightRange]);
   
-  // LOGIC FIX: Category is now required for this to be true
+  // VALIDATION: All 3 fields required
   const canContinue = Boolean(weightRange && size && category);
 
+  // Smooth layout changes (opacity fades)
   const animate = () => {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
   };
@@ -70,20 +72,19 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
     <View style={styles.container}>
       <ScrollView 
         style={styles.scroll} 
-        contentContainerStyle={[styles.content, { paddingBottom: insets.bottom + 180 }]} 
+        contentContainerStyle={[styles.content, { paddingBottom: 120 }]} // Enough padding for footer
         showsVerticalScrollIndicator={false}
       >
-        {/* HEADING FONT RESTORED */}
+        {/* HEADER: Big & Bold */}
         <Text style={styles.mainHeading}>Send parcel in Ghana</Text>
-        <Text style={styles.lead}>Reliable shipping across the country. Tracking and insurance included.</Text>
+        <Text style={styles.lead}>Reliable shipping across the country.</Text>
 
-        {/* WEIGHT SELECTION */}
+        {/* --- SECTION 1: WEIGHT --- */}
         <Text style={styles.sectionLabel}>Weight</Text>
         <View style={styles.cardsContainer}>
           {WEIGHT_RANGES.map((w) => {
             const isSelected = weightRange === w.id;
-            const isAnySelected = weightRange !== null;
-            const isCollapsed = isAnySelected && !isSelected;
+            const isDimmed = weightRange !== null && !isSelected;
 
             return (
               <Pressable
@@ -92,37 +93,34 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                 style={({ pressed }) => [
                   styles.card, 
                   isSelected && styles.cardSelected,
-                  isCollapsed && styles.cardCollapsed,
-                  pressed && styles.cardPressed
+                  isDimmed && styles.cardDimmed, // Stable, just dimmed
+                  pressed && !isDimmed && styles.cardPressed
                 ]}
               >
                 <View style={styles.cardInfo}>
-                  <Text style={[
-                    styles.cardTitle, 
-                    isSelected && styles.selectedText, 
-                    isCollapsed && styles.collapsedTitle
-                  ]}>
+                  <Text style={[styles.cardTitle, isSelected && styles.redText]}>
                     {w.title}
                   </Text>
-                  {/* Removed the redundant 'Within...' text here */}
+                  {/* Keep price visible to allow comparison */}
+                  <Text style={[styles.cardSubtitle, isSelected && styles.redText]}>
+                    From {formatPrice(w.priceFrom)}
+                  </Text>
                 </View>
 
-                {!isCollapsed && (
-                  <View style={[styles.priceBadge, isSelected && styles.priceBadgeActive]}>
-                    <Text style={[styles.priceValue, isSelected && styles.whiteText]}>{formatPrice(w.priceFrom)}</Text>
+                {isSelected && (
+                  <View style={styles.checkIcon}>
+                     <Check size={16} color="#FFF" strokeWidth={3} />
                   </View>
                 )}
-                
-                {isCollapsed && <ChevronRight size={18} color={MUTED} strokeWidth={2} />}
               </Pressable>
             );
           })}
         </View>
 
-        {/* SIZE SELECTION - Only appears after weight is picked */}
+        {/* --- SECTION 2: SIZE (Appears after Weight) --- */}
         {weightRange && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Package Size</Text>
+            <Text style={styles.sectionLabel}>Size</Text>
             <View style={styles.segmentedControl}>
               {SIZES.map((s) => {
                 const isSelected = size === s.id;
@@ -136,7 +134,9 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
                     }}
                     style={[styles.segment, isSelected && styles.segmentActive]}
                   >
-                    <Text style={[styles.segmentText, isSelected && styles.segmentTextActive]}>{s.label}</Text>
+                    <Text style={[styles.segmentText, isSelected && styles.redText]}>
+                      {s.label}
+                    </Text>
                   </Pressable>
                 );
               })}
@@ -149,36 +149,42 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
           </View>
         )}
 
-        {/* CATEGORY SELECTION - ALWAYS VISIBLE, MANDATORY */}
+        {/* --- SECTION 3: CATEGORY (Appears after Weight) --- */}
         {weightRange && (
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Category (Required)</Text>
+            <Text style={styles.sectionLabel}>Category</Text>
             <View style={styles.chipGrid}>
-              {CATEGORIES.map((c) => (
-                <Pressable
-                  key={c}
-                  onPress={() => { 
-                    Haptics.selectionAsync(); 
-                    setCategory(category === c ? undefined : c); 
-                  }}
-                  style={[styles.chip, category === c && styles.chipActive]}
-                >
-                  <Text style={[styles.chipLabel, category === c && styles.chipLabelActive]}>{c}</Text>
-                </Pressable>
-              ))}
+              {CATEGORIES.map((c) => {
+                const isSelected = category === c;
+                return (
+                  <Pressable
+                    key={c}
+                    onPress={() => { 
+                      Haptics.selectionAsync(); 
+                      setCategory(c); 
+                    }}
+                    style={[styles.chip, isSelected && styles.chipActive]}
+                  >
+                    <Text style={[styles.chipLabel, isSelected && styles.redText]}>
+                      {c}
+                    </Text>
+                  </Pressable>
+                );
+              })}
             </View>
           </View>
         )}
       </ScrollView>
 
-      {/* FOOTER */}
-      <View style={[styles.footerContainer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        {canContinue && (
-          <View style={styles.summaryToast}>
-             <Text style={styles.summarySub}>{selectedWeightMeta?.title} • {size?.toUpperCase()}</Text>
-             <Text style={styles.summaryPrice}>{formatPrice(basePrice || selectedWeightMeta?.priceFrom || 0)}</Text>
-          </View>
-        )}
+      {/* --- UNIFIED STICKY FOOTER --- */}
+      <View style={[styles.unifiedFooter, { paddingBottom: Math.max(insets.bottom, 20) }]}>
+        <View style={styles.priceContainer}>
+          <Text style={styles.totalLabel}>Total Estimate</Text>
+          <Text style={styles.totalValue}>
+            {formatPrice(basePrice || selectedWeightMeta?.priceFrom || 0)}
+          </Text>
+        </View>
+
         <Pressable
           onPress={() => {
             Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
@@ -202,25 +208,22 @@ export const Step1Size = ({ onNext }: { onNext: () => void }) => {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: BG },
   scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 10 },
+  content: { paddingHorizontal: 16, paddingTop: 12 },
 
-  // BIG HEADING RESTORED
+  // Typography
   mainHeading: { 
     fontSize: 34, 
     fontWeight: '800', 
     color: TEXT, 
-    marginBottom: 8, 
-    marginTop: 10,
-    letterSpacing: -0.5 
+    letterSpacing: -0.5,
+    marginBottom: 6 
   },
   lead: { 
     fontSize: 15, 
     color: MUTED, 
     marginBottom: 24, 
-    fontWeight: '400',
-    lineHeight: 22 
+    fontWeight: '400' 
   },
-
   sectionLabel: {
     fontSize: 13,
     fontWeight: '600',
@@ -230,6 +233,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
 
+  // Weight Cards
   cardsContainer: { gap: 8 },
   card: { 
     flexDirection: 'row', 
@@ -238,76 +242,75 @@ const styles = StyleSheet.create({
     alignItems: 'center', 
     borderWidth: 1, 
     borderColor: CARD_BORDER, 
-    borderRadius: 14 
+    borderRadius: 14,
+    height: 72, // Fixed height for stability
   },
-  cardPressed: { backgroundColor: 'rgba(0,0,0,0.04)' },
-  cardSelected: { borderColor: RED_TEXT, borderWidth: 1.5 },
-  cardCollapsed: { paddingVertical: 12, backgroundColor: CARD_BG, opacity: 0.6 },
+  cardPressed: { backgroundColor: '#F9F9F9' },
+  cardSelected: { borderColor: RED_TEXT, backgroundColor: '#FFF5F5' }, // Very light red tint
+  cardDimmed: { opacity: 0.5, borderColor: 'transparent', backgroundColor: '#F0F0F0' }, // Visual "de-emphasis"
   
   cardInfo: { flex: 1 },
-  cardTitle: { fontSize: 17, fontWeight: '400', color: TEXT },
-  collapsedTitle: { fontSize: 15, color: MUTED },
+  cardTitle: { fontSize: 16, fontWeight: '600', color: TEXT, marginBottom: 2 },
+  cardSubtitle: { fontSize: 14, color: MUTED },
   
-  priceBadge: { backgroundColor: RED_BG, paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10 },
-  priceBadgeActive: { backgroundColor: RED_TEXT },
-  priceValue: { fontSize: 13, fontWeight: '500', color: RED_TEXT },
-  whiteText: { color: '#FFFFFF' },
+  checkIcon: {
+    width: 24, height: 24, borderRadius: 12, backgroundColor: RED_TEXT,
+    alignItems: 'center', justifyContent: 'center'
+  },
 
+  // Size Segment
   section: { marginTop: 24 },
-  
   segmentedControl: { 
     flexDirection: 'row', 
     backgroundColor: '#E3E3E8', 
-    padding: 2, 
-    borderRadius: 9 
+    padding: 3, 
+    borderRadius: 10 
   },
-  segment: { flex: 1, paddingVertical: 8, alignItems: 'center', borderRadius: 7 },
-  segmentActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 2, elevation: 1 },
-  segmentText: { fontSize: 13, fontWeight: '500', color: TEXT },
-  segmentTextActive: { fontWeight: '600' },
-  
+  segment: { flex: 1, paddingVertical: 10, alignItems: 'center', borderRadius: 8 },
+  segmentActive: { backgroundColor: '#FFFFFF', shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 3, elevation: 1 },
+  segmentText: { fontSize: 14, fontWeight: '500', color: TEXT },
   dimHint: { fontSize: 13, color: MUTED, textAlign: 'center', marginTop: 8, fontWeight: '500' },
 
-  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  // Categories
+  chipGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   chip: { 
-    paddingVertical: 8, 
-    paddingHorizontal: 14, 
-    borderRadius: 20, 
+    paddingVertical: 10, 
+    paddingHorizontal: 16, 
+    borderRadius: 12, // Slightly boxier than round pills
     borderWidth: 1, 
     borderColor: CARD_BORDER, 
     backgroundColor: '#FFF' 
   },
   chipActive: { backgroundColor: RED_BG, borderColor: RED_TEXT },
-  chipLabel: { fontSize: 14, color: TEXT },
-  chipLabelActive: { color: RED_TEXT, fontWeight: '600' },
+  chipLabel: { fontSize: 14, fontWeight: '500', color: TEXT },
 
-  footerContainer: { 
-    position: 'absolute', 
-    bottom: 0, 
-    left: 0, 
-    right: 0, 
-    backgroundColor: '#FFFFFF', 
-    paddingTop: 12, 
-    paddingHorizontal: 16, 
-    borderTopWidth: 1, 
-    borderTopColor: CARD_BORDER 
+  // Footer
+  unifiedFooter: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: CARD_BORDER,
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    shadowColor: '#000', shadowOpacity: 0.05, shadowRadius: 10, elevation: 5,
   },
-  summaryToast: { 
-    flexDirection: 'row', 
-    justifyContent: 'space-between', 
-    alignItems: 'center', 
-    backgroundColor: RED_BG, 
-    padding: 12, 
-    borderRadius: 12, 
-    marginBottom: 12 
+  priceContainer: { flexDirection: 'column' },
+  totalLabel: { fontSize: 12, color: MUTED, fontWeight: '600', textTransform: 'uppercase' },
+  totalValue: { fontSize: 22, color: TEXT, fontWeight: '800', marginTop: 2 },
+
+  continueBtn: { 
+    paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14, 
+    minWidth: 140, alignItems: 'center' 
   },
-  summarySub: { color: RED_TEXT, fontSize: 13, fontWeight: '600' },
-  summaryPrice: { color: RED_TEXT, fontSize: 17, fontWeight: '700' },
-  
-  continueBtn: { height: 50, borderRadius: 12, justifyContent: 'center', alignItems: 'center' },
   btnEnabled: { backgroundColor: RED_TEXT },
-  btnDisabled: { backgroundColor: '#C7C7CC' },
+  btnDisabled: { backgroundColor: '#E5E5EA' },
   btnPressed: { opacity: 0.8 },
-  continueBtnText: { color: '#FFF', fontSize: 17, fontWeight: '600' },
-  selectedText: { color: RED_TEXT, fontWeight: '600' },
+  continueBtnText: { color: '#FFF', fontSize: 16, fontWeight: '700' },
+
+  // Helpers
+  redText: { color: RED_TEXT, fontWeight: '700' },
 });
