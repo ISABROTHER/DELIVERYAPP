@@ -1,190 +1,34 @@
-import React, { useMemo, useState, useRef } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image, Animated, Platform, UIManager } from 'react-native';
-import { useSendParcel } from '../context/SendParcelContext';
-import * as Haptics from 'expo-haptics';
+import { useEffect } from 'react';
+import { Redirect } from 'expo-router';
+import { useAuth } from '@/contexts/AuthContext';
+import { View, ActivityIndicator, StyleSheet } from 'react-native';
 
-if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
-  UIManager.setLayoutAnimationEnabledExperimental(true);
+export default function Index() {
+  const { user, loading } = useAuth();
+
+  // Show a loading spinner while checking for a session
+  if (loading) {
+    return (
+      <View style={styles.container}>
+        <ActivityIndicator size="large" color="#1F7A4E" />
+      </View>
+    );
+  }
+
+  /**
+   * TESTING STAGE GUEST ACCESS
+   * We redirect to (tabs) regardless of whether 'user' is null or not.
+   * To restore registration/login later, change this back to:
+   * return user ? <Redirect href="/(tabs)" /> : <Redirect href="/(auth)/login" />;
+   */
+  return <Redirect href="/(tabs)" />;
 }
 
-const OPTIONS = [
-  {
-    id: 'up-to-5kg',
-    title: 'Parcel up to 5 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=5kg',
-    impliedSize: 'small' as const,
-  },
-  {
-    id: 'up-to-10kg',
-    title: 'Parcel up to 10 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=10kg',
-    impliedSize: 'medium' as const,
-  },
-  {
-    id: 'up-to-15kg',
-    title: 'Parcel up to 15 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=15kg',
-    impliedSize: 'large' as const,
-  },
-  {
-    id: 'up-to-20kg',
-    title: 'Parcel up to 20 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=20kg',
-    impliedSize: 'large' as const,
-  },
-  {
-    id: 'up-to-25kg',
-    title: 'Parcel up to 25 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25kg',
-    impliedSize: 'large' as const,
-  },
-  {
-    id: 'up-to-30kg',
-    title: 'Parcel up to 30 kg',
-    bullets: ['Send from anywhere', 'Insurance included'],
-    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=30kg',
-    impliedSize: 'large' as const,
-  },
-] as const;
-
-// THEME: ALIGNED WITH PROFILE SIDE
-const BG = '#F2F2F7'; 
-const TEXT = '#111827';
-const MUTED = '#6B7280';
-const GREEN_TEXT = '#14532D';
-const LIGHT_GREEN = '#DCFCE7';
-const CARD_BORDER = 'rgba(60,60,67,0.18)';
-
-export const Step1Size = ({ onNext }: { onNext: () => void }) => {
-  const { parcel, updateParcel } = useSendParcel();
-  const [selectedId, setSelectedId] = useState<string | null>(parcel?.weightRange || null);
-  
-  const scale = useRef(new Animated.Value(1)).current;
-
-  const selectOption = (id: string) => {
-    Haptics.selectionAsync();
-    setSelectedId(id);
-    const opt = OPTIONS.find((o) => o.id === id);
-    if (!opt) return;
-
-    updateParcel({
-      weightRange: opt.id,
-      size: opt.impliedSize,
-      category: undefined,
-    });
-
-    // Auto-advance logic for testing stage speed
-    setTimeout(() => onNext(), 250);
-  };
-
-  const handlePressIn = () => {
-    Animated.timing(scale, { toValue: 0.98, duration: 80, useNativeDriver: true }).start();
-  };
-
-  const handlePressOut = () => {
-    Animated.timing(scale, { toValue: 1, duration: 120, useNativeDriver: true }).start();
-  };
-
-  return (
-    <View style={styles.container}>
-      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false} bounces={false}>
-        
-        <Text style={styles.backLabel}>Send</Text>
-        <Text style={styles.title}>Parcel in Ghana</Text>
-        <Text style={styles.lead}>
-          Reliable shipping across the country. Select your package weight to begin.
-        </Text>
-
-        <View style={styles.list}>
-          {OPTIONS.map((o, idx) => {
-            const isSelected = selectedId === o.id;
-
-            return (
-              <Animated.View key={o.id} style={isSelected ? { transform: [{ scale }] } : null}>
-                <Pressable
-                  onPressIn={handlePressIn}
-                  onPressOut={handlePressOut}
-                  onPress={() => selectOption(o.id)}
-                  style={({ pressed }) => [
-                    styles.row,
-                    isSelected && styles.rowSelected,
-                    pressed && styles.rowPressed,
-                  ]}
-                >
-                  <View style={styles.left}>
-                    <Text style={[styles.rowTitle, isSelected && styles.greenText]}>{o.title}</Text>
-                    <Text style={styles.bullet}>• {o.bullets[0]}</Text>
-                    <Text style={styles.bullet}>• {o.bullets[1]}</Text>
-                  </View>
-
-                  <View style={styles.right}>
-                    {/* PICTURE BOX ON LIGHT GREEN */}
-                    <View style={styles.imageBox}>
-                      <Image source={{ uri: o.imageUri }} style={styles.image} resizeMode="contain" />
-                    </View>
-                  </View>
-                </Pressable>
-                {idx !== OPTIONS.length - 1 && <View style={styles.divider} />}
-              </Animated.View>
-            );
-          })}
-        </View>
-      </ScrollView>
-    </View>
-  );
-};
-
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
-  scroll: { flex: 1 },
-  content: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 30 },
-
-  backLabel: { fontSize: 17, fontWeight: '600', color: GREEN_TEXT, marginBottom: 4 },
-  title: { fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1, marginBottom: 6 },
-  lead: { fontSize: 16, lineHeight: 22, fontWeight: '400', color: MUTED, marginBottom: 20 },
-
-  list: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    borderWidth: 1,
-    borderColor: CARD_BORDER,
-    overflow: 'hidden',
-  },
-
-  row: { 
-    flexDirection: 'row', 
-    paddingVertical: 14, 
-    paddingHorizontal: 16, 
-    alignItems: 'center' 
-  },
-  rowPressed: { backgroundColor: 'rgba(0,0,0,0.04)' },
-  rowSelected: { backgroundColor: '#F0FDF4' },
-
-  left: { flex: 1, paddingRight: 12 },
-  rowTitle: { fontSize: 18, fontWeight: '700', color: TEXT, marginBottom: 4 },
-  bullet: { fontSize: 14, color: MUTED, lineHeight: 18, marginBottom: 1 },
-
-  right: { width: 74, alignItems: 'flex-end', justifyContent: 'center' },
-  imageBox: {
-    width: 70, 
-    height: 70,
-    borderRadius: 12,
-    backgroundColor: LIGHT_GREEN,
+  container: {
+    flex: 1,
+    justifyContent: 'center', 
     alignItems: 'center',
-    justifyContent: 'center',
-    overflow: 'hidden',
+    backgroundColor: '#F2F2F7',
   },
-  image: { width: '80%', height: '80%' },
-  
-  divider: { 
-    height: 1, 
-    backgroundColor: CARD_BORDER, 
-    marginLeft: 16 
-  },
-  greenText: { color: GREEN_TEXT },
 });
