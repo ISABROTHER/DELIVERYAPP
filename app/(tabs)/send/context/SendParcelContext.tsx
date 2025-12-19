@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+ import React, { createContext, useContext, useState, ReactNode } from 'react';
 import { calculateTotalPrice } from '../config/pricing';
 
 export type ParcelDetails = {
@@ -70,6 +70,7 @@ type SendParcelContextType = {
   sender: SenderInfo | null;
   recipient: RecipientInfo | null;
   security: Security | null;
+  currentStep: number;
   totalPrice: number;
   basePrice: number;
   pickupFee: number;
@@ -79,6 +80,7 @@ type SendParcelContextType = {
   updateSender: (sender: SenderInfo) => void;
   updateRecipient: (recipient: RecipientInfo) => void;
   updateSecurity: (security: Security) => void;
+  setCurrentStep: (step: number) => void;
   reset: () => void;
 };
 
@@ -91,6 +93,7 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
   const [sender, setSender] = useState<SenderInfo | null>(null);
   const [recipient, setRecipient] = useState<RecipientInfo | null>(null);
   const [security, setSecurity] = useState<Security | null>(null);
+  const [currentStep, setCurrentStep] = useState(1);
 
   const basePrice = parcel ? getPriceForParcel(parcel.size, parcel.weightRange) : 0;
   const pickupFee = handover?.method === 'PICKUP' ? 15 : 0;
@@ -110,6 +113,7 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
     setSender(null);
     setRecipient(null);
     setSecurity(null);
+    setCurrentStep(1);
   };
 
   return (
@@ -121,6 +125,7 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
         sender,
         recipient,
         security,
+        currentStep,
         totalPrice,
         basePrice,
         pickupFee,
@@ -130,6 +135,7 @@ export const SendParcelProvider = ({ children }: { children: ReactNode }) => {
         updateSender,
         updateRecipient,
         updateSecurity,
+        setCurrentStep,
         reset,
       }}
     >
