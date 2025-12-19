@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { SendParcelProvider, useSendParcel } from './send/context/SendParcelContext';
+import { useSendParcel } from './send/context/SendParcelContext';
 import { ProgressBar } from './send/components/ProgressBar';
 import { Step1Size } from './send/steps/Step1Size';
 import { Step2Route } from './send/steps/Step2Route';
@@ -13,8 +13,7 @@ import { Step6SecureHandover } from './send/steps/Step6SecureHandover';
 const TOTAL_STEPS = 6;
  
 const SendParcelFlow = () => {
-  const [currentStep, setCurrentStep] = useState(1);
-  const { reset } = useSendParcel();
+  const { currentStep, setCurrentStep, reset } = useSendParcel();
 
   const handleNext = () => {
     if (currentStep < TOTAL_STEPS) {
@@ -30,12 +29,10 @@ const SendParcelFlow = () => {
 
   const handleClose = () => {
     reset();
-    setCurrentStep(1);
   };
 
   const handleComplete = () => {
     reset();
-    setCurrentStep(1);
   };
 
   const renderStep = () => {
@@ -72,9 +69,7 @@ const SendParcelFlow = () => {
 
 export default function SendScreen() {
   return (
-    <SendParcelProvider>
-      <SendParcelFlow />
-    </SendParcelProvider>
+    <SendParcelFlow />
   );
 }
 
