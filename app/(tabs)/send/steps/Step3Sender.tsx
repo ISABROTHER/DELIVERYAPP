@@ -179,12 +179,12 @@ export const Step3Sender = ({ onNext }: { onNext: () => void }) => {
         </View>
 
         <PriceSummary />
-      </ScrollView>
 
-      {/* FOOTER: Raised 10% to prevent being hidden on Android */}
-      <View style={styles.footer}>
-        <ContinueButton onPress={handleContinue} disabled={!isValid} />
-      </View>
+        {/* Continue is now at the end of information */}
+        <View style={styles.buttonWrapper}>
+          <ContinueButton onPress={handleContinue} disabled={!isValid} />
+        </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 };
@@ -198,7 +198,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   scrollPadding: {
-    paddingBottom: 24,
+    paddingBottom: SCREEN_HEIGHT * 0.12,
   },
   form: {
     paddingHorizontal: 18,
@@ -254,7 +254,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: '#E5E5EA',
     maxHeight: 200,
-    zIndex: 10,
   },
   dropdownScroll: {
     maxHeight: 200,
@@ -276,13 +275,7 @@ const styles = StyleSheet.create({
   halfWidth: {
     flex: 1,
   },
-  footer: {
-    paddingHorizontal: 18,
-    paddingTop: 18,
-    // Raised to ensure visibility on all Android screens
-    paddingBottom: SCREEN_HEIGHT * 0.08, 
-    backgroundColor: '#FFFFFF',
-    borderTopWidth: 1,
-    borderTopColor: '#E5E5EA',
+  buttonWrapper: {
+    marginTop: 10,
   },
 });
