@@ -1,99 +1,221 @@
 import React, { useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView, Pressable, TouchableOpacity } from 'react-native';
 import { StepHeader } from '../components/StepHeader';
-import { PriceSummary } from '../components/PriceSummary';
 import { ContinueButton } from '../components/ContinueButton';
-import { useSendParcel } from '../context/SendParcelContext';
-import { deliveryMethods, DeliveryMethod } from '../config/deliveryMethods';
-import { Truck, Home } from 'lucide-react-native';
+import { useSendParcel, Route } from '../context/SendParcelContext';
+import { MapPin, Navigation, X } from 'lucide-react-native';
 
-type Step2DeliveryMethodProps = {
+type Step2RouteProps = {
   onNext: () => void;
+  onClose?: () => void;
 };
 
-export const Step2DeliveryMethod = ({ onNext }: Step2DeliveryMethodProps) => {
-  const { selectedDeliveryMethod, updateDeliveryMethod } = useSendParcel();
-  const [localSelection, setLocalSelection] = useState<DeliveryMethod | null>(
-    selectedDeliveryMethod || deliveryMethods[0]
-  );
+const GHANA_REGIONS = [
+  'Greater Accra',
+  'Ashanti',
+  'Western',
+  'Eastern',
+  'Central',
+  'Northern',
+  'Upper East',
+  'Upper West',
+  'Volta',
+  'Bono',
+  'Bono East',
+  'Ahafo',
+  'Savannah',
+  'North East',
+  'Oti',
+  'Western North',
+];
 
-  React.useEffect(() => {
-    if (!selectedDeliveryMethod && deliveryMethods[0]) {
-      updateDeliveryMethod(deliveryMethods[0]);
-      setLocalSelection(deliveryMethods[0]);
+export const Step2Route = ({ onNext, onClose }: Step2RouteProps) => {
+  const { route, updateRoute, reset } = useSendParcel();
+
+  const [originRegion, setOriginRegion] = useState(route?.origin.region || '');
+  const [originCity, setOriginCity] = useState(route?.origin.cityTown || '');
+  const [originLandmark, setOriginLandmark] = useState(route?.origin.landmark || '');
+  const [showOriginRegions, setShowOriginRegions] = useState(false);
+
+  const [destRegion, setDestRegion] = useState(route?.destination.region || '');
+  const [destCity, setDestCity] = useState(route?.destination.cityTown || '');
+  const [destLandmark, setDestLandmark] = useState(route?.destination.landmark || '');
+  const [showDestRegions, setShowDestRegions] = useState(false);
+
+  const handleClose = () => {
+    if (onClose) {
+      reset(); // Clears the context so we start fresh
+      onClose();
     }
-  }, []);
-
-  const handleSelectMethod = (method: DeliveryMethod) => {
-    setLocalSelection(method);
-    updateDeliveryMethod(method);
   };
 
   const handleContinue = () => {
-    if (localSelection) {
+    if (originRegion && originCity && destRegion && destCity) {
+      const routeData: Route = {
+        origin: {
+          region: originRegion,
+          cityTown: originCity,
+          landmark: originLandmark || undefined,
+        },
+        destination: {
+          region: destRegion,
+          cityTown: destCity,
+          landmark: destLandmark || undefined,
+        },
+      };
+      updateRoute(routeData);
       onNext();
     }
   };
 
-  const getIcon = (methodId: string) => {
-    return methodId === 'self' ? Truck : Home;
-  };
+  const canContinue = originRegion && originCity && destRegion && destCity;
 
   return (
     <View style={styles.container}>
+      <View style={styles.headerRow}>
+        <TouchableOpacity style={styles.closeButton} onPress={handleClose}>
+          <X size={24} color="#0B1220" />
+        </TouchableOpacity>
+      </View>
+
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
         <StepHeader
-          title="How the parcel is sent"
-          subtitle="Choose how you want to send your parcel"
+          title="Route"
+          subtitle="Where is the parcel coming from and going to?"
         />
 
-        <View style={styles.optionsContainer}>
-          {deliveryMethods.map((method) => {
-            const Icon = getIcon(method.id);
-            return (
-              <Pressable
-                key={method.id}
-                style={({ pressed }) => [
-                  styles.option,
-                  localSelection?.id === method.id && styles.optionSelected,
-                  pressed && styles.optionPressed,
-                ]}
-                onPress={() => handleSelectMethod(method)}
-              >
-                <View style={styles.optionIcon}>
-                  <Icon
-                    size={24}
-                    color={localSelection?.id === method.id ? '#34B67A' : '#6B7280'}
-                  />
-                </View>
+        <View style={styles.routeCard}>
+          <View style={styles.routeHeader}>
+            <MapPin size={20} color="#34B67A" />
+            <Text style={styles.routeTitle}>Origin (From)</Text>
+          </View>
 
-                <View style={styles.optionContent}>
-                  <View style={styles.optionHeader}>
-                    <Text style={styles.optionLabel}>{method.label}</Text>
-                    {method.additionalCost > 0 && (
-                      <Text style={styles.additionalCost}>+{method.additionalCost} kr</Text>
-                    )}
-                  </View>
-                  <Text style={styles.optionDescription}>{method.description}</Text>
-                </View>
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Region *</Text>
+            <Pressable
+              style={styles.dropdownButton}
+              onPress={() => setShowOriginRegions(!showOriginRegions)}
+            >
+              <Text style={[styles.dropdownText, !originRegion && styles.placeholder]}>
+                {originRegion || 'Select region'}
+              </Text>
+            </Pressable>
+            {showOriginRegions && (
+              <View style={styles.dropdown}>
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                  {GHANA_REGIONS.map((region) => (
+                    <Pressable
+                      key={region}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setOriginRegion(region);
+                        setShowOriginRegions(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>{region}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
 
-                <View
-                  style={[
-                    styles.radioOuter,
-                    localSelection?.id === method.id && styles.radioOuterSelected,
-                  ]}
-                >
-                  {localSelection?.id === method.id && <View style={styles.radioInner} />}
-                </View>
-              </Pressable>
-            );
-          })}
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>City/Town *</Text>
+            <TextInput
+              style={styles.input}
+              value={originCity}
+              onChangeText={setOriginCity}
+              placeholder="e.g., Accra, Kumasi"
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Landmark (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={originLandmark}
+              onChangeText={setOriginLandmark}
+              placeholder="e.g., Near Oxford Street"
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
         </View>
 
-        <PriceSummary />
+        <View style={styles.routeCard}>
+          <View style={styles.routeHeader}>
+            <Navigation size={20} color="#34B67A" />
+            <Text style={styles.routeTitle}>Destination (To)</Text>
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Region *</Text>
+            <Pressable
+              style={styles.dropdownButton}
+              onPress={() => setShowDestRegions(!showDestRegions)}
+            >
+              <Text style={[styles.dropdownText, !destRegion && styles.placeholder]}>
+                {destRegion || 'Select region'}
+              </Text>
+            </Pressable>
+            {showDestRegions && (
+              <View style={styles.dropdown}>
+                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
+                  {GHANA_REGIONS.map((region) => (
+                    <Pressable
+                      key={region}
+                      style={styles.dropdownItem}
+                      onPress={() => {
+                        setDestRegion(region);
+                        setShowDestRegions(false);
+                      }}
+                    >
+                      <Text style={styles.dropdownItemText}>{region}</Text>
+                    </Pressable>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>City/Town *</Text>
+            <TextInput
+              style={styles.input}
+              value={destCity}
+              onChangeText={setDestCity}
+              placeholder="e.g., Takoradi, Tema"
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+
+          <View style={styles.inputGroup}>
+            <Text style={styles.label}>Landmark (Optional)</Text>
+            <TextInput
+              style={styles.input}
+              value={destLandmark}
+              onChangeText={setDestLandmark}
+              placeholder="e.g., Near Market Circle"
+              placeholderTextColor="#9CA3AF"
+            />
+          </View>
+        </View>
+
+        {canContinue && (
+          <View style={styles.routeSummary}>
+            <Text style={styles.summaryText}>
+              From: {originCity}, {originRegion}
+            </Text>
+            <Text style={styles.summaryArrow}>→</Text>
+            <Text style={styles.summaryText}>
+              To: {destCity}, {destRegion}
+            </Text>
+          </View>
+        )}
       </ScrollView>
 
-      <ContinueButton onPress={handleContinue} disabled={!localSelection} />
+      <ContinueButton onPress={handleContinue} disabled={!canContinue} />
     </View>
   );
 };
@@ -102,81 +224,118 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    paddingHorizontal: 18,
+    paddingTop: 10,
+  },
+  closeButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.05)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   content: {
     flex: 1,
   },
-  optionsContainer: {
-    paddingHorizontal: 18,
+  routeCard: {
+    marginHorizontal: 18,
     marginBottom: 20,
-  },
-  option: {
-    flexDirection: 'row',
-    alignItems: 'center',
     padding: 16,
     backgroundColor: 'rgba(255,255,255,0.62)',
     borderRadius: 16,
-    borderWidth: 2,
+    borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.55)',
-    marginBottom: 12,
   },
-  optionSelected: {
-    borderColor: '#34B67A',
-    backgroundColor: 'rgba(52,182,122,0.05)',
-  },
-  optionPressed: {
-    opacity: 0.9,
-  },
-  optionIcon: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
-    backgroundColor: 'rgba(255,255,255,0.8)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  optionContent: {
-    flex: 1,
-  },
-  optionHeader: {
+  routeHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 4,
+    marginBottom: 16,
+    gap: 8,
   },
-  optionLabel: {
-    fontSize: 15,
+  routeTitle: {
+    fontSize: 17,
     fontWeight: '900',
     color: '#0B1220',
-    flex: 1,
   },
-  additionalCost: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#34B67A',
+  inputGroup: {
+    marginBottom: 16,
   },
-  optionDescription: {
-    fontSize: 12,
+  label: {
+    fontSize: 14,
     fontWeight: '700',
     color: '#6B7280',
-    lineHeight: 16,
+    marginBottom: 8,
   },
-  radioOuter: {
-    width: 24,
-    height: 24,
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0B1220',
+  },
+  dropdownButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.08)',
+    borderRadius: 12,
+    padding: 14,
+  },
+  dropdownText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0B1220',
+  },
+  placeholder: {
+    color: '#9CA3AF',
+  },
+  dropdown: {
+    marginTop: 8,
+    backgroundColor: '#FFFFFF',
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: '#D1D5DB',
+    borderColor: 'rgba(0,0,0,0.08)',
+    maxHeight: 200,
+  },
+  dropdownScroll: {
+    maxHeight: 200,
+  },
+  dropdownItem: {
+    padding: 14,
+    borderBottomWidth: 1,
+    borderBottomColor: 'rgba(0,0,0,0.05)',
+  },
+  dropdownItemText: {
+    fontSize: 15,
+    fontWeight: '700',
+    color: '#0B1220',
+  },
+  routeSummary: {
+    marginHorizontal: 18,
+    marginBottom: 20,
+    padding: 16,
+    backgroundColor: 'rgba(52,182,122,0.08)',
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(52,182,122,0.18)',
     alignItems: 'center',
-    justifyContent: 'center',
-    marginLeft: 12,
   },
-  radioOuterSelected: {
-    borderColor: '#34B67A',
+  summaryText: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#0B1220',
+    textAlign: 'center',
   },
-  radioInner: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    backgroundColor: '#34B67A',
+  summaryArrow: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#34B67A',
+    marginVertical: 4,
   },
 });
