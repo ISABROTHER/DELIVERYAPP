@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Send, User } from 'lucide-react-native';
+import { SendParcelProvider, useSendParcel } from './send/context/SendParcelContext';
 
 const GREEN = '#34B67A';
 const INACTIVE = '#8E8E93';
@@ -16,16 +17,12 @@ const BAR_BG = 'rgba(255,255,255,0.92)';
 const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  // Logic to hide tab bar if we are inside the 'send' flow and past Step 1
+  const { currentStep } = useSendParcel();
   const focusedRoute = state.routes[state.index];
   const focusedRouteName = focusedRoute.name;
 
-  // We check the 'send' route specifically
-  // Since SendParcelFlow manages its own state, we look at the navigation state
-  // However, for Bolt.new 'vibe' editing, a reliable way to hide it on Send
-  // while allowing it on Step 1 is to let the Send component signal its state.
-  // For now, we will hide it entirely for the 'send' tab as requested for the flow.
-  if (focusedRouteName === 'send') {
+  // Only hide the tab bar if we are on the 'send' tab AND past Step 1
+  if (focusedRouteName === 'send' && currentStep > 1) {
     return null;
   }
 
@@ -92,36 +89,38 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
 export default function TabLayout() {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: GREEN,
-        tabBarInactiveTintColor: INACTIVE,
-      }}
-      tabBar={(props) => <ModernTabBar {...props} />}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
+    <SendParcelProvider>
+      <Tabs
+        screenOptions={{
+          headerShown: false,
+          tabBarActiveTintColor: GREEN,
+          tabBarInactiveTintColor: INACTIVE,
         }}
-      />
-      <Tabs.Screen
-        name="send"
-        options={{
-          title: 'Send',
-          tabBarIcon: ({ size, color }) => <Send size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
-        }}
-      />
-    </Tabs>
+        tabBar={(props) => <ModernTabBar {...props} />}
+      >
+        <Tabs.Screen
+          name="index"
+          options={{
+            title: 'Home',
+            tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="send"
+          options={{
+            title: 'Send',
+            tabBarIcon: ({ size, color }) => <Send size={size} color={color} />,
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+          }}
+        />
+      </Tabs>
+    </SendParcelProvider>
   );
 }
 
