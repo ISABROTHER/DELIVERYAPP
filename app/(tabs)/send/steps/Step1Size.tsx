@@ -36,6 +36,13 @@ const OPTIONS = [
     imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=25%2Bkg',
     impliedSize: 'large' as const,
   },
+  {
+    id: 'unknown-size',
+    title: "I don't know the weight",
+    bullets: ['We will help you later', 'Standard insurance included'],
+    imageUri: 'https://placehold.co/200x200/DCFCE7/15803D/png?text=%3F',
+    impliedSize: 'medium' as const,
+  },
 ] as const;
 
 // THEME: MATCHING PROFILE SIDE
