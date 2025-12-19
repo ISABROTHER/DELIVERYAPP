@@ -22,6 +22,10 @@ const SendParcelFlow = () => {
     }
   };
 
+  const handleBackToStart = () => {
+    setCurrentStep(1);
+  };
+
   const handleComplete = () => {
     setCurrentStep(1);
   };
@@ -31,7 +35,7 @@ const SendParcelFlow = () => {
       case 1:
         return <Step1Size onNext={handleNext} />;
       case 2:
-        return <Step2Route onNext={handleNext} />;
+        return <Step2Route onNext={handleNext} onClose={handleBackToStart} />;
       case 3:
         return <Step3HandoverMethod onNext={handleNext} />;
       case 4:
@@ -47,7 +51,7 @@ const SendParcelFlow = () => {
 
   return (
     <SafeAreaView style={styles.container} edges={['top']}>
-      <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />
+      {currentStep > 1 && <ProgressBar currentStep={currentStep} totalSteps={TOTAL_STEPS} />}
       <View style={styles.stepContainer}>{renderStep()}</View>
     </SafeAreaView>
   );
