@@ -9,7 +9,7 @@ import {
 } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Home, Send, User } from 'lucide-react-native';
-import { SendParcelProvider } from './send/context/SendParcelContext';
+import { SendParcelProvider, useSendParcel } from './send/context/SendParcelContext';
 
 const GREEN = '#34B67A';
 const INACTIVE = '#8E8E93';
@@ -17,8 +17,14 @@ const BAR_BG = 'rgba(255,255,255,0.92)';
 const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  // We have removed the "return null" logic. 
-  // The tab bar will now stay visible on every single step of your app.
+  const { currentStep } = useSendParcel();
+  const focusedRoute = state.routes[state.index];
+  const focusedRouteName = focusedRoute.name;
+
+  // Hides the tab bar if we are on the 'send' tab and past Step 1
+  if (focusedRouteName === 'send' && currentStep > 1) {
+    return null;
+  }
 
   return (
     <View style={styles.tabBarWrap} accessibilityRole="tablist">
