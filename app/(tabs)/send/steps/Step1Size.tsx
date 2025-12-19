@@ -1,12 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, Pressable, StyleSheet, ScrollView, Image } from 'react-native';
+import React, { useMemo, useState, useRef } from 'react';
+import { View, Text, Pressable, StyleSheet, ScrollView, Image, Animated, Platform, UIManager } from 'react-native';
 import { useSendParcel } from '../context/SendParcelContext';
+import * as Haptics from 'expo-haptics';
 
-type Step1SizeProps = {
-  onNext: () => void;
-};
+if (Platform.OS === 'android' && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 
-// Match the attached UI: title + description + list cards with image box + “From …”
 const OPTIONS = [
   {
     id: '1-5kg',
@@ -14,7 +14,6 @@ const OPTIONS = [
     within: 'Within 35 × 25 × 12 cm',
     bullets: ['Send from mailbox or parcel box', 'Compensation up to 2 500 kr'],
     fromLabel: 'From 73 kr',
-    // simple illustration placeholder (you can replace with your own asset later)
     imageUri: 'https://placehold.co/220x220/E8F5E9/2E7D32/png?text=5kg',
     impliedSize: 'small' as const,
   },
@@ -36,73 +35,66 @@ const OPTIONS = [
     imageUri: 'https://placehold.co/220x220/E8F5E9/2E7D32/png?text=25kg',
     impliedSize: 'large' as const,
   },
-  {
-    id: '25-35kg',
-    title: 'Parcel up to 35 kg',
-    within: 'Within 120 × 60 × 60 cm',
-    bullets: ['Possibility for larger packages', 'Compensation up to 10 000 kr'],
-    fromLabel: 'From 310 kr',
-    imageUri: 'https://placehold.co/220x220/E8F5E9/2E7D32/png?text=35kg',
-    impliedSize: 'large' as const,
-  },
 ] as const;
 
-const BG = '#FFFFFF';
-const TEXT = '#0B1220';
-const MUTED = '#4B5563';
-const DIVIDER = '#D1D5DB';
+// THEME: MATCHING PROFILE SIDE
+const BG = '#F2F2F7'; 
+const TEXT = '#111827';
+const MUTED = '#6B7280';
+const GREEN_TEXT = '#1F7A4E';
+const GREEN_BG = 'rgba(52, 182, 122, 0.15)';
+const CARD_BORDER = 'rgba(60,60,67,0.18)';
 
-const GREEN = '#2E7D32';
-const LIGHT_GREEN = '#E8F5E9';
-
-export const Step1Size = ({ onNext }: Step1SizeProps) => {
+export const Step1Size = ({ onNext }: { onNext: () => void }) => {
   const { parcel, updateParcel } = useSendParcel();
   const [selectedId, setSelectedId] = useState<string | null>(parcel?.weightRange || null);
-
-  const selected = useMemo(() => OPTIONS.find((o) => o.id === selectedId), [selectedId]);
+  
+  // Animation scale
+  const scale = useRef(new Animated.Value(1)).current;
 
   const selectOption = (id: string) => {
+    Haptics.selectionAsync();
     setSelectedId(id);
     const opt = OPTIONS.find((o) => o.id === id);
     if (!opt) return;
 
-    // Keep the flow stable: we still set weightRange + also set an implied "size"
-    // so later steps that depend on size don't break.
     updateParcel({
       weightRange: opt.id,
       size: opt.impliedSize,
-      // Remove anything not in the screenshot (no category here)
       category: undefined,
     });
 
-    // Move to next step immediately after selection (no extra buttons in the screenshot)
-    setTimeout(() => onNext(), 200);
+    setTimeout(() => onNext(), 300);
+  };
+
+  const handlePressIn = () => {
+    Animated.timing(scale, { toValue: 0.98, duration: 100, useNativeDriver: true }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.timing(scale, { toValue: 1, duration: 150, useNativeDriver: true }).start();
   };
 
   return (
     <View style={styles.container}>
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={styles.content}
-        showsVerticalScrollIndicator={false}
-        bounces={false}
-      >
-        {/* Header — match screenshot */}
+      <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
+        
+        {/* HEADER: Corrected Font Hierarchy */}
         <Text style={styles.backLabel}>Send</Text>
-        <Text style={styles.title}>Parcel in Norway</Text>
+        <Text style={styles.title}>Parcel in Ghana</Text>
         <Text style={styles.lead}>
-          Delivery time 2–3 working days. Including tracking and compensation. All parcels can be
-          delivered at the post office or post in shop.
+          Reliable shipping across the country. Tracking and insurance included by default.
         </Text>
 
-        {/* List — match screenshot */}
         <View style={styles.list}>
           {OPTIONS.map((o, idx) => {
             const isSelected = selectedId === o.id;
 
             return (
-              <View key={o.id}>
+              <Animated.View key={o.id} style={isSelected ? { transform: [{ scale }] } : null}>
                 <Pressable
+                  onPressIn={handlePressIn}
+                  onPressOut={handlePressOut}
                   onPress={() => selectOption(o.id)}
                   style={({ pressed }) => [
                     styles.row,
@@ -125,124 +117,45 @@ export const Step1Size = ({ onNext }: Step1SizeProps) => {
                     <Text style={styles.from}>{o.fromLabel}</Text>
                   </View>
                 </Pressable>
-
                 {idx !== OPTIONS.length - 1 && <View style={styles.divider} />}
-              </View>
+              </Animated.View>
             );
           })}
         </View>
-
-        {/* No extra UI below — screenshot ends after list */}
-        <View style={{ height: 10 }} />
       </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: BG },
+  container: { flex: 1, backgroundColor: BG }, // iOS Grouped BG
   scroll: { flex: 1 },
-  content: {
-    paddingHorizontal: 18,
-    paddingTop: 10,
-    paddingBottom: 16,
-  },
+  content: { paddingHorizontal: 20, paddingTop: 12, paddingBottom: 30 },
 
-  // Small “Send” label (represents the nav/back context without implementing a header here)
-  backLabel: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: GREEN,
-    marginBottom: 10,
-  },
+  backLabel: { fontSize: 17, fontWeight: '600', color: GREEN_TEXT, marginBottom: 8 },
+  title: { fontSize: 34, fontWeight: '800', color: TEXT, letterSpacing: -1, marginBottom: 10 },
+  lead: { fontSize: 16, lineHeight: 22, fontWeight: '400', color: MUTED, marginBottom: 24 },
 
-  title: {
-    fontSize: 44,
-    fontWeight: '800',
-    color: TEXT,
-    letterSpacing: -0.6,
-    marginBottom: 10,
-  },
-  lead: {
-    fontSize: 22,
-    lineHeight: 30,
-    fontWeight: '400',
-    color: TEXT,
-    marginBottom: 22,
-  },
+  row: { flexDirection: 'row', paddingVertical: 20, paddingHorizontal: 4, borderRadius: 12 },
+  rowPressed: { backgroundColor: 'rgba(0,0,0,0.04)' }, // Matching ProfileRow
+  rowSelected: { backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: CARD_BORDER }, // Matches Section Cards
 
-  list: {
-    // the screenshot is essentially full-width rows
-  },
+  left: { flex: 1, paddingRight: 8 },
+  rowTitle: { fontSize: 18, fontWeight: '700', color: TEXT, marginBottom: 4 },
+  rowWithin: { fontSize: 14, fontWeight: '600', color: TEXT, marginBottom: 8 },
+  bullet: { fontSize: 14, color: MUTED, lineHeight: 20, marginBottom: 2 },
 
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-    paddingVertical: 22,
-  },
-  rowPressed: {
-    opacity: 0.92,
-  },
-  rowSelected: {
-    backgroundColor: 'transparent',
-  },
-
-  left: {
-    flex: 1,
-    paddingRight: 10,
-  },
-
-  rowTitle: {
-    fontSize: 34,
-    fontWeight: '800',
-    color: TEXT,
-    letterSpacing: -0.4,
-  },
-  rowWithin: {
-    marginTop: 2,
-    fontSize: 22,
-    fontWeight: '700',
-    color: TEXT,
-    letterSpacing: -0.2,
-  },
-
-  bullet: {
-    marginTop: 10,
-    fontSize: 22,
-    lineHeight: 28,
-    fontWeight: '400',
-    color: TEXT,
-  },
-
-  right: {
-    width: 130,
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    gap: 10,
-  },
-
+  right: { width: 110, alignItems: 'flex-end', justifyContent: 'center' },
   imageBox: {
-    width: 118,
-    height: 118,
-    borderRadius: 6,
-    backgroundColor: LIGHT_GREEN,
+    width: 100,
+    height: 100,
+    borderRadius: 14, // Matches Card Radius
+    backgroundColor: GREEN_BG,
     alignItems: 'center',
     justifyContent: 'center',
-    overflow: 'hidden',
+    marginBottom: 8,
   },
-  image: {
-    width: '88%',
-    height: '88%',
-  },
-
-  from: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: GREEN,
-  },
-
-  divider: {
-    height: StyleSheet.hairlineWidth,
-    backgroundColor: DIVIDER,
-  },
+  image: { width: '80%', height: '80%' },
+  from: { fontSize: 16, fontWeight: '800', color: GREEN_TEXT },
+  divider: { height: 1, backgroundColor: CARD_BORDER, marginVertical: 8, marginHorizontal: 4 },
 });
