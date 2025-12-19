@@ -6,11 +6,12 @@ import { ProgressBar } from './send/components/ProgressBar';
 import { Step1Size } from './send/steps/Step1Size';
 import { Step2Route } from './send/steps/Step2Route';
 import { Step3HandoverMethod } from './send/steps/Step3HandoverMethod';
-import { Step4Parties } from './send/steps/Step4Parties';
+import { Step3Sender } from './send/steps/Step3Sender';
+import { Step4Recipient } from './send/steps/Step4Recipient';
 import { Step5Summary } from './send/steps/Step5Summary';
 import { Step6SecureHandover } from './send/steps/Step6SecureHandover';
 
-const TOTAL_STEPS = 6;
+const TOTAL_STEPS = 7;
  
 const SendParcelFlow = () => {
   const { currentStep, setCurrentStep, reset } = useSendParcel();
@@ -44,10 +45,12 @@ const SendParcelFlow = () => {
       case 3:
         return <Step3HandoverMethod onNext={handleNext} />;
       case 4:
-        return <Step4Parties onNext={handleNext} />;
+        return <Step3Sender onNext={handleNext} />;
       case 5:
-        return <Step5Summary onComplete={handleNext} />;
+        return <Step4Recipient onNext={handleNext} />;
       case 6:
+        return <Step5Summary onComplete={handleNext} />;
+      case 7:
         return <Step6SecureHandover onComplete={handleComplete} />;
       default:
         return <Step1Size onNext={handleNext} />;
