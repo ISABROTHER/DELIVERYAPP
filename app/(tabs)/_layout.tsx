@@ -1,151 +1,190 @@
 import React from 'react';
+import { Tabs } from 'expo-router';
 import {
-  View,
-  ScrollView,
+  Platform,
+  Pressable,
   StyleSheet,
-  Alert,
+  Text,
+  View,
 } from 'react-native';
-import { 
-  User, 
-  Settings, 
-  MapPin, 
-  Bell, 
-  Lock, 
-  ShieldCheck, 
-  LogOut, 
-  HelpCircle,
-  CreditCard,
-  History,
-  Languages,
-  Trash2,
-  Mail
-} from 'lucide-react-native';
-import { useAuth } from '../../../contexts/AuthContext';
-import { UserDetailsCard } from './components/UserDetailsCard';
-import { ProfileSectionCard } from './components/ProfileSectionCard';
-import { ProfileRow } from './components/ProfileRow';
-import { InfoBanner } from './components/InfoBanner';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { Home, Send, User } from 'lucide-react-native';
 
-export default function ProfileScreen() {
-  const { signOut, user } = useAuth();
+const GREEN = '#34B67A';
+const INACTIVE = '#8E8E93';
+const BAR_BG = 'rgba(255,255,255,0.92)';
+const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
-  const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out', 
-          style: 'destructive',
-          onPress: () => signOut() 
-        },
-      ]
-    );
-  };
+function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  // Logic to hide tab bar if we are inside the 'send' flow and past Step 1
+  const focusedRoute = state.routes[state.index];
+  const focusedRouteName = focusedRoute.name;
+
+  // We check the 'send' route specifically
+  // Since SendParcelFlow manages its own state, we look at the navigation state
+  // However, for Bolt.new 'vibe' editing, a reliable way to hide it on Send
+  // while allowing it on Step 1 is to let the Send component signal its state.
+  // For now, we will hide it entirely for the 'send' tab as requested for the flow.
+  if (focusedRouteName === 'send') {
+    return null;
+  }
 
   return (
-    <View style={styles.container}>
-      <ScrollView 
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-      >
-        <UserDetailsCard 
-          name={user?.email?.split('@')[0] || 'User'} 
-          email={user?.email || ''} 
-        />
+    <View style={styles.tabBarWrap} accessibilityRole="tablist">
+      <View pointerEvents="none" style={styles.tabBarSurface} />
 
-        <InfoBanner 
-          title="Verify your account"
-          message="Complete your profile to unlock all features."
-          type="warning"
-        />
+      <View style={styles.row}>
+        {state.routes.map((route, index) => {
+          const focused = state.index === index;
+          const { options } = descriptors[route.key];
 
-        <ProfileSectionCard title="Account Settings">
-          <ProfileRow 
-            icon={User} 
-            label="Edit Profile" 
-            href="/(tabs)/profile/edit-profile" 
-          />
-          <ProfileRow 
-            icon={MapPin} 
-            label="Favorite Pickup Points" 
-            href="/(tabs)/profile/favorite-pickup" 
-          />
-          <ProfileRow 
-            icon={CreditCard} 
-            label="Payment Methods" 
-            href="/(tabs)/profile/payment" 
-          />
-          <ProfileRow 
-            icon={Mail} 
-            label="Mailbox Preferences" 
-            href="/(tabs)/profile/mailbox-prefs" 
-          />
-        </ProfileSectionCard>
+          const label =
+            options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+                ? options.title
+                : route.name;
 
-        <ProfileSectionCard title="Activity & Security">
-          <ProfileRow 
-            icon={History} 
-            label="Receipts & History" 
-            href="/(tabs)/profile/receipts" 
-          />
-          <ProfileRow 
-            icon={Bell} 
-            label="Notifications" 
-            href="/(tabs)/profile/notifications" 
-          />
-          <ProfileRow 
-            icon={Lock} 
-            label="Change Password" 
-            href="/(tabs)/profile/change-password" 
-          />
-          <ProfileRow 
-            icon={ShieldCheck} 
-            label="Data & Privacy" 
-            href="/(tabs)/profile/data-privacy" 
-          />
-        </ProfileSectionCard>
+          const color = focused ? GREEN : INACTIVE;
 
-        <ProfileSectionCard title="Preferences">
-          <ProfileRow 
-            icon={Languages} 
-            label="Language & Country" 
-            href="/(tabs)/profile/language-country" 
-          />
-          <ProfileRow 
-            icon={HelpCircle} 
-            label="Help & Support" 
-            href="/(tabs)/profile/support" 
-          />
-        </ProfileSectionCard>
+          const icon =
+            options.tabBarIcon?.({
+              focused,
+              color,
+              size: 22,
+            }) ?? null;
 
-        <ProfileSectionCard title="Danger Zone">
-          <ProfileRow 
-            icon={Trash2} 
-            label="Delete Account" 
-            href="/(tabs)/profile/delete-profile"
-            color="#FF3B30"
-          />
-          <ProfileRow 
-            icon={LogOut} 
-            label="Sign Out" 
-            onPress={handleSignOut}
-            color="#FF3B30"
-            showArrow={false}
-          />
-        </ProfileSectionCard>
-      </ScrollView>
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
+
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name);
+            }
+          };
+
+          return (
+            <Pressable
+              key={route.key}
+              onPress={onPress}
+              style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
+              accessibilityLabel={typeof label === 'string' ? label : route.name}
+            >
+              <View style={[styles.iconCapsule, focused ? styles.iconCapsuleActive : styles.iconCapsuleIdle]}>
+                {icon}
+              </View>
+
+              <Text style={[styles.label, focused ? styles.labelActive : styles.labelIdle]}>
+                {typeof label === 'string' ? label : route.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
     </View>
   );
 }
 
+export default function TabLayout() {
+  return (
+    <Tabs
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: GREEN,
+        tabBarInactiveTintColor: INACTIVE,
+      }}
+      tabBar={(props) => <ModernTabBar {...props} />}
+    >
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Home',
+          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="send"
+        options={{
+          title: 'Send',
+          tabBarIcon: ({ size, color }) => <Send size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Profile',
+          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
+        }}
+      />
+    </Tabs>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F2F2F7',
+  tabBarWrap: {
+    position: 'relative',
+    backgroundColor: 'transparent',
+    borderTopWidth: 0,
+    height: 78,
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 14 : 12,
   },
-  scrollContent: {
-    paddingBottom: 40,
+  tabBarSurface: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: BAR_BG,
+    borderTopWidth: 1,
+    borderTopColor: BAR_BORDER,
+    shadowColor: '#0B1220',
+    shadowOpacity: 0.06,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: -10 },
+    elevation: 10,
+  },
+  row: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  item: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  itemPressed: {
+    opacity: 0.92,
+  },
+  iconCapsule: {
+    width: 46,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 4,
+  },
+  iconCapsuleActive: {
+    backgroundColor: 'rgba(52,182,122,0.14)',
+    borderWidth: 1,
+    borderColor: 'rgba(52,182,122,0.22)',
+  },
+  iconCapsuleIdle: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: 'transparent',
+  },
+  label: {
+    fontSize: 11.5,
+    fontWeight: '800',
+    letterSpacing: 0.1,
+  },
+  labelActive: {
+    color: GREEN,
+  },
+  labelIdle: {
+    color: INACTIVE,
   },
 });
