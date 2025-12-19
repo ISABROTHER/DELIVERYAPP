@@ -41,8 +41,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginHorizontal: 18,
-    marginBottom: 16,
     shadowColor: '#34B67A',
     shadowOpacity: 0.3,
     shadowRadius: 12,
@@ -50,8 +48,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   buttonDisabled: {
-    backgroundColor: 'rgba(107,114,128,0.3)',
+    backgroundColor: '#D1D5DB', // Solid gray for better visibility on Android
     shadowOpacity: 0,
+    elevation: 0,
   },
   buttonPressed: {
     opacity: 0.9,
