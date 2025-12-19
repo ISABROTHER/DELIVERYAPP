@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tabs } from 'expo-router';
+import { Tabs, useSegments } from 'expo-router';
 import {
   Platform,
   Pressable,
@@ -16,6 +16,10 @@ const BAR_BG = 'rgba(255,255,255,0.92)';
 const BAR_BORDER = 'rgba(229,229,234,0.9)';
 
 function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  // Check if we are in the "send" tab to hide the bar
+  const focusedRoute = state.routes[state.index].name;
+  if (focusedRoute === 'send') return null;
+
   return (
     <View style={styles.tabBarWrap} accessibilityRole="tablist">
       <View pointerEvents="none" style={styles.tabBarSurface} />
@@ -70,7 +74,6 @@ function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
               accessibilityState={{ selected: focused }}
               accessibilityLabel={typeof label === 'string' ? label : route.name}
             >
-              {/* Active highlight capsule behind icon (matches screenshot format) */}
               <View style={[styles.iconCapsule, focused ? styles.iconCapsuleActive : styles.iconCapsuleIdle]}>
                 {icon}
               </View>
@@ -126,31 +129,26 @@ const styles = StyleSheet.create({
     position: 'relative',
     backgroundColor: 'transparent',
     borderTopWidth: 0,
-    height: 78, // matches the screenshot “tall enough but not bulky”
+    height: 78,
     paddingTop: 8,
     paddingBottom: Platform.OS === 'ios' ? 14 : 12,
   },
-
   tabBarSurface: {
     ...StyleSheet.absoluteFillObject,
     backgroundColor: BAR_BG,
     borderTopWidth: 1,
     borderTopColor: BAR_BORDER,
-
-    // subtle lift like modern apps
     shadowColor: '#0B1220',
     shadowOpacity: 0.06,
     shadowRadius: 18,
     shadowOffset: { width: 0, height: -10 },
     elevation: 10,
   },
-
   row: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
   },
-
   item: {
     flex: 1,
     alignItems: 'center',
@@ -159,8 +157,6 @@ const styles = StyleSheet.create({
   itemPressed: {
     opacity: 0.92,
   },
-
-  // Icon capsule sizing is the key to screenshot-like spacing
   iconCapsule: {
     width: 46,
     height: 32,
@@ -179,7 +175,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'transparent',
   },
-
   label: {
     fontSize: 11.5,
     fontWeight: '800',
