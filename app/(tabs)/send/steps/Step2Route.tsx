@@ -1,313 +1,237 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, Pressable } from 'react-native';
-import { StepHeader } from '../components/StepHeader';
+import React from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Pressable,
+} from 'react-native';
+import { MapPin, ArrowRight, Package } from 'lucide-react-native';
+import { useSendParcel } from '../context/SendParcelContext';
 import { ContinueButton } from '../components/ContinueButton';
-import { useSendParcel, Route, Location } from '../context/SendParcelContext';
-import { MapPin, Navigation } from 'lucide-react-native';
 
-type Step2RouteProps = {
-  onNext: () => void;
-};
+const GREEN = '#34B67A';
+const TEXT = '#0B1220';
+const MUTED = '#6B7280';
+const BORDER = '#E5E5EA';
 
-const GHANA_REGIONS = [
-  'Greater Accra',
-  'Ashanti',
-  'Western',
-  'Eastern',
-  'Central',
-  'Northern',
-  'Upper East',
-  'Upper West',
-  'Volta',
-  'Bono',
-  'Bono East',
-  'Ahafo',
-  'Savannah',
-  'North East',
-  'Oti',
-  'Western North',
-];
+export function Step2Route({ onNext }: { onNext: () => void }) {
+  const { route, updateRoute, parcel } = useSendParcel();
 
-export const Step2Route = ({ onNext }: Step2RouteProps) => {
-  const { route, updateRoute } = useSendParcel();
+  const handleUpdate = (type: 'origin' | 'destination', field: string, value: string) => {
+    const currentRoute = route || {
+      origin: { region: '', cityTown: '' },
+      destination: { region: '', cityTown: '' },
+    };
 
-  const [originRegion, setOriginRegion] = useState(route?.origin.region || '');
-  const [originCity, setOriginCity] = useState(route?.origin.cityTown || '');
-  const [originLandmark, setOriginLandmark] = useState(route?.origin.landmark || '');
-  const [showOriginRegions, setShowOriginRegions] = useState(false);
-
-  const [destRegion, setDestRegion] = useState(route?.destination.region || '');
-  const [destCity, setDestCity] = useState(route?.destination.cityTown || '');
-  const [destLandmark, setDestLandmark] = useState(route?.destination.landmark || '');
-  const [showDestRegions, setShowDestRegions] = useState(false);
-
-  const handleContinue = () => {
-    if (originRegion && originCity && destRegion && destCity) {
-      const routeData: Route = {
-        origin: {
-          region: originRegion,
-          cityTown: originCity,
-          landmark: originLandmark || undefined,
-        },
-        destination: {
-          region: destRegion,
-          cityTown: destCity,
-          landmark: destLandmark || undefined,
-        },
-      };
-      updateRoute(routeData);
-      onNext();
-    }
+    updateRoute({
+      ...currentRoute,
+      [type]: {
+        ...currentRoute[type],
+        [field]: value,
+      },
+    });
   };
 
-  const canContinue = originRegion && originCity && destRegion && destCity;
+  const isComplete = 
+    route?.origin?.cityTown && 
+    route?.origin?.region && 
+    route?.destination?.cityTown && 
+    route?.destination?.region;
 
   return (
     <View style={styles.container}>
       <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <StepHeader
-          title="Route"
-          subtitle="Where is the parcel coming from and going to?"
-        />
+        <View style={styles.header}>
+          <Text style={styles.title}>Delivery Route</Text>
+          <Text style={styles.subtitle}>Where is the parcel going?</Text>
+        </View>
 
-        <View style={styles.routeCard}>
-          <View style={styles.routeHeader}>
-            <MapPin size={20} color="#34B67A" />
-            <Text style={styles.routeTitle}>Origin (From)</Text>
+        {/* Parcel Preview Vibe */}
+        <View style={styles.previewCard}>
+          <View style={styles.previewIcon}>
+            <Package size={20} color={GREEN} />
           </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Region *</Text>
-            <Pressable
-              style={styles.dropdownButton}
-              onPress={() => setShowOriginRegions(!showOriginRegions)}
-            >
-              <Text style={[styles.dropdownText, !originRegion && styles.placeholder]}>
-                {originRegion || 'Select region'}
-              </Text>
-            </Pressable>
-            {showOriginRegions && (
-              <View style={styles.dropdown}>
-                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-                  {GHANA_REGIONS.map((region) => (
-                    <Pressable
-                      key={region}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setOriginRegion(region);
-                        setShowOriginRegions(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{region}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
+          <View>
+            <Text style={styles.previewLabel}>Selected Size</Text>
+            <Text style={styles.previewValue}>
+              {parcel?.size ? parcel.size.charAt(0).toUpperCase() + parcel.size.slice(1) : 'Not selected'}
+            </Text>
           </View>
+        </View>
 
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.dot, { backgroundColor: MUTED }]} />
+            <Text style={styles.sectionTitle}>Pickup Location</Text>
+          </View>
+          
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>City/Town *</Text>
             <TextInput
               style={styles.input}
-              value={originCity}
-              onChangeText={setOriginCity}
-              placeholder="e.g., Accra, Kumasi"
-              placeholderTextColor="#9CA3AF"
+              placeholder="Region (e.g. Greater Accra)"
+              value={route?.origin?.region}
+              onChangeText={(v) => handleUpdate('origin', 'region', v)}
+              placeholderTextColor={MUTED}
             />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Landmark (Optional)</Text>
             <TextInput
               style={styles.input}
-              value={originLandmark}
-              onChangeText={setOriginLandmark}
-              placeholder="e.g., Near Oxford Street"
-              placeholderTextColor="#9CA3AF"
+              placeholder="City or Town"
+              value={route?.origin?.cityTown}
+              onChangeText={(v) => handleUpdate('origin', 'cityTown', v)}
+              placeholderTextColor={MUTED}
             />
           </View>
         </View>
 
-        <View style={styles.routeCard}>
-          <View style={styles.routeHeader}>
-            <Navigation size={20} color="#34B67A" />
-            <Text style={styles.routeTitle}>Destination (To)</Text>
+        <View style={styles.connector}>
+          <View style={styles.line} />
+          <ArrowRight size={20} color={BORDER} />
+          <View style={styles.line} />
+        </View>
+
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <View style={[styles.dot, { backgroundColor: GREEN }]} />
+            <Text style={styles.sectionTitle}>Drop-off Location</Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Region *</Text>
-            <Pressable
-              style={styles.dropdownButton}
-              onPress={() => setShowDestRegions(!showDestRegions)}
-            >
-              <Text style={[styles.dropdownText, !destRegion && styles.placeholder]}>
-                {destRegion || 'Select region'}
-              </Text>
-            </Pressable>
-            {showDestRegions && (
-              <View style={styles.dropdown}>
-                <ScrollView style={styles.dropdownScroll} nestedScrollEnabled>
-                  {GHANA_REGIONS.map((region) => (
-                    <Pressable
-                      key={region}
-                      style={styles.dropdownItem}
-                      onPress={() => {
-                        setDestRegion(region);
-                        setShowDestRegions(false);
-                      }}
-                    >
-                      <Text style={styles.dropdownItemText}>{region}</Text>
-                    </Pressable>
-                  ))}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>City/Town *</Text>
             <TextInput
               style={styles.input}
-              value={destCity}
-              onChangeText={setDestCity}
-              placeholder="e.g., Takoradi, Tema"
-              placeholderTextColor="#9CA3AF"
+              placeholder="Region (e.g. Ashanti)"
+              value={route?.destination?.region}
+              onChangeText={(v) => handleUpdate('destination', 'region', v)}
+              placeholderTextColor={MUTED}
             />
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Landmark (Optional)</Text>
             <TextInput
               style={styles.input}
-              value={destLandmark}
-              onChangeText={setDestLandmark}
-              placeholder="e.g., Near Market Circle"
-              placeholderTextColor="#9CA3AF"
+              placeholder="City or Town"
+              value={route?.destination?.cityTown}
+              onChangeText={(v) => handleUpdate('destination', 'cityTown', v)}
+              placeholderTextColor={MUTED}
             />
           </View>
         </View>
-
-        {canContinue && (
-          <View style={styles.routeSummary}>
-            <Text style={styles.summaryText}>
-              From: {originCity}, {originRegion}
-            </Text>
-            <Text style={styles.summaryArrow}>→</Text>
-            <Text style={styles.summaryText}>
-              To: {destCity}, {destRegion}
-            </Text>
-          </View>
-        )}
       </ScrollView>
 
-      <ContinueButton onPress={handleContinue} disabled={!canContinue} />
+      <View style={styles.footer}>
+        <ContinueButton
+          onPress={onNext}
+          disabled={!isComplete}
+          label="Next: Handover Method"
+        />
+      </View>
     </View>
   );
-};
+}
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
+    backgroundColor: '#F9FAFB',
   },
   content: {
     flex: 1,
+    padding: 24,
   },
-  routeCard: {
-    marginHorizontal: 18,
-    marginBottom: 20,
-    padding: 16,
-    backgroundColor: 'rgba(255,255,255,0.62)',
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.55)',
+  header: {
+    marginBottom: 24,
   },
-  routeHeader: {
+  title: {
+    fontSize: 28,
+    fontWeight: '900',
+    color: TEXT,
+    letterSpacing: -0.5,
+  },
+  subtitle: {
+    fontSize: 16,
+    color: MUTED,
+    marginTop: 4,
+    fontWeight: '500',
+  },
+  previewCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#FFFFFF',
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 24,
+    borderWidth: 1,
+    borderColor: BORDER,
+    gap: 12,
+  },
+  previewIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 8,
+    backgroundColor: 'rgba(52, 182, 122, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  previewLabel: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: MUTED,
+    textTransform: 'uppercase',
+  },
+  previewValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: TEXT,
+  },
+  section: {
+    gap: 12,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: 8,
+    marginBottom: 4,
   },
-  routeTitle: {
-    fontSize: 17,
-    fontWeight: '900',
-    color: '#0B1220',
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
   },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
+  sectionTitle: {
     fontSize: 14,
     fontWeight: '700',
-    color: '#6B7280',
-    marginBottom: 8,
+    color: TEXT,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  inputGroup: {
+    gap: 12,
   },
   input: {
     backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 12,
-    padding: 14,
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0B1220',
-  },
-  dropdownButton: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
-    borderRadius: 12,
-    padding: 14,
-  },
-  dropdownText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0B1220',
-  },
-  placeholder: {
-    color: '#9CA3AF',
-  },
-  dropdown: {
-    marginTop: 8,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    borderWidth: 2,
-    borderColor: 'rgba(0,0,0,0.08)',
-    maxHeight: 200,
-  },
-  dropdownScroll: {
-    maxHeight: 200,
-  },
-  dropdownItem: {
-    padding: 14,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)',
-  },
-  dropdownItemText: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: '#0B1220',
-  },
-  routeSummary: {
-    marginHorizontal: 18,
-    marginBottom: 20,
-    padding: 16,
-    backgroundColor: 'rgba(52,182,122,0.08)',
-    borderRadius: 16,
     borderWidth: 1,
-    borderColor: 'rgba(52,182,122,0.18)',
+    borderColor: BORDER,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: TEXT,
+    fontWeight: '600',
+  },
+  connector: {
+    flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 16,
+    gap: 12,
   },
-  summaryText: {
-    fontSize: 14,
-    fontWeight: '900',
-    color: '#0B1220',
-    textAlign: 'center',
+  line: {
+    flex: 1,
+    height: 1,
+    backgroundColor: BORDER,
+    borderStyle: 'dashed',
   },
-  summaryArrow: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#34B67A',
-    marginVertical: 4,
+  footer: {
+    padding: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: BORDER,
   },
 });
