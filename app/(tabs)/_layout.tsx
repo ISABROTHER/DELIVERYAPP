@@ -1,190 +1,385 @@
-import React from 'react';
-import { Tabs } from 'expo-router';
+import { useState, useMemo } from 'react';
 import {
-  Platform,
-  Pressable,
-  StyleSheet,
-  Text,
   View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TextInput,
+  Pressable,
 } from 'react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-import { Home, Send, User } from 'lucide-react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { Search, Package, MapPin, Clock, CheckCircle2, ArrowRight } from 'lucide-react-native';
 
 const GREEN = '#34B67A';
-const INACTIVE = '#8E8E93';
-const BAR_BG = 'rgba(255,255,255,0.92)';
-const BAR_BORDER = 'rgba(229,229,234,0.9)';
+const BG = '#F9FAFB';
+const TEXT = '#0B1220';
+const MUTED = '#6B7280';
+const BORDER = '#E5E5EA';
 
-function ModernTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  // Logic to hide tab bar if we are inside the 'send' flow and past Step 1
-  const focusedRoute = state.routes[state.index];
-  const focusedRouteName = focusedRoute.name;
+type TabType = 'all' | 'to-me' | 'from-me';
 
-  // We check the 'send' route specifically
-  // Since SendParcelFlow manages its own state, we look at the navigation state
-  // However, for Bolt.new 'vibe' editing, a reliable way to hide it on Send
-  // while allowing it on Step 1 is to let the Send component signal its state.
-  // For now, we will hide it entirely for the 'send' tab as requested for the flow.
-  if (focusedRouteName === 'send') {
-    return null;
-  }
+type Shipment = {
+  id: string;
+  trackingId: string;
+  status: 'In Transit' | 'Delivered' | 'Pending';
+  origin: string;
+  destination: string;
+  type: 'to-me' | 'from-me';
+  date: string;
+};
+
+const MOCK_SHIPMENTS: Shipment[] = [
+  {
+    id: '1',
+    trackingId: 'SHIP-123456',
+    status: 'In Transit',
+    origin: 'Accra, Central',
+    destination: 'Kumasi, Ashanti',
+    type: 'from-me',
+    date: 'Dec 18, 2025',
+  },
+  {
+    id: '2',
+    trackingId: 'SHIP-789012',
+    status: 'Delivered',
+    origin: 'Lagos, Nigeria',
+    destination: 'Abuja, Nigeria',
+    type: 'to-me',
+    date: 'Dec 15, 2025',
+  },
+  {
+    id: '3',
+    trackingId: 'SHIP-456789',
+    status: 'Pending',
+    origin: 'Cape Coast, Central',
+    destination: 'Takoradi, Western',
+    type: 'from-me',
+    date: 'Dec 19, 2025',
+  },
+];
+
+function StatusBadge({ status }: { status: Shipment['status'] }) {
+  const getColors = () => {
+    switch (status) {
+      case 'In Transit':
+        return { bg: 'rgba(52, 182, 122, 0.1)', text: GREEN, icon: <Clock size={12} color={GREEN} /> };
+      case 'Delivered':
+        return { bg: '#F3F4F6', text: MUTED, icon: <CheckCircle2 size={12} color={MUTED} /> };
+      default:
+        return { bg: '#FEF3C7', text: '#D97706', icon: <Clock size={12} color="#D97706" /> };
+    }
+  };
+
+  const colors = getColors();
 
   return (
-    <View style={styles.tabBarWrap} accessibilityRole="tablist">
-      <View pointerEvents="none" style={styles.tabBarSurface} />
-
-      <View style={styles.row}>
-        {state.routes.map((route, index) => {
-          const focused = state.index === index;
-          const { options } = descriptors[route.key];
-
-          const label =
-            options.tabBarLabel !== undefined
-              ? options.tabBarLabel
-              : options.title !== undefined
-                ? options.title
-                : route.name;
-
-          const color = focused ? GREEN : INACTIVE;
-
-          const icon =
-            options.tabBarIcon?.({
-              focused,
-              color,
-              size: 22,
-            }) ?? null;
-
-          const onPress = () => {
-            const event = navigation.emit({
-              type: 'tabPress',
-              target: route.key,
-              canPreventDefault: true,
-            });
-
-            if (!focused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
-
-          return (
-            <Pressable
-              key={route.key}
-              onPress={onPress}
-              style={({ pressed }) => [styles.item, pressed ? styles.itemPressed : null]}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: focused }}
-              accessibilityLabel={typeof label === 'string' ? label : route.name}
-            >
-              <View style={[styles.iconCapsule, focused ? styles.iconCapsuleActive : styles.iconCapsuleIdle]}>
-                {icon}
-              </View>
-
-              <Text style={[styles.label, focused ? styles.labelActive : styles.labelIdle]}>
-                {typeof label === 'string' ? label : route.name}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
+    <View style={[styles.badge, { backgroundColor: colors.bg }]}>
+      {colors.icon}
+      <Text style={[styles.badgeText, { color: colors.text }]}>{status}</Text>
     </View>
   );
 }
 
-export default function TabLayout() {
+function ShipmentCard({ shipment }: { shipment: Shipment }) {
   return (
-    <Tabs
-      screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: GREEN,
-        tabBarInactiveTintColor: INACTIVE,
-      }}
-      tabBar={(props) => <ModernTabBar {...props} />}
-    >
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Home',
-          tabBarIcon: ({ size, color }) => <Home size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="send"
-        options={{
-          title: 'Send',
-          tabBarIcon: ({ size, color }) => <Send size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ size, color }) => <User size={size} color={color} />,
-        }}
-      />
-    </Tabs>
+    <Pressable style={styles.card}>
+      <View style={styles.cardHeader}>
+        <View style={styles.trackingInfo}>
+          <Text style={styles.trackingLabel}>Tracking ID</Text>
+          <Text style={styles.trackingId}>{shipment.trackingId}</Text>
+        </View>
+        <StatusBadge status={shipment.status} />
+      </View>
+
+      <View style={styles.routeContainer}>
+        <View style={styles.routePoint}>
+          <MapPin size={16} color={MUTED} />
+          <Text style={styles.routeText} numberOfLines={1}>{shipment.origin}</Text>
+        </View>
+        <ArrowRight size={16} color={BORDER} style={styles.routeArrow} />
+        <View style={styles.routePoint}>
+          <MapPin size={16} color={GREEN} />
+          <Text style={styles.routeText} numberOfLines={1}>{shipment.destination}</Text>
+        </View>
+      </View>
+
+      <View style={styles.cardFooter}>
+        <Text style={styles.dateText}>{shipment.date}</Text>
+        <Text style={styles.typeText}>{shipment.type === 'to-me' ? 'Receiving' : 'Sent'}</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+export default function HomeScreen() {
+  const [searchQuery, setSearchQuery] = useState('');
+  const [activeTab, setActiveTab] = useState<TabType>('all');
+
+  const filteredShipments = useMemo(() => {
+    return MOCK_SHIPMENTS.filter((s) => {
+      const matchesTab = activeTab === 'all' || s.type === activeTab;
+      const matchesSearch = 
+        s.trackingId.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.origin.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        s.destination.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesTab && matchesSearch;
+    });
+  }, [activeTab, searchQuery]);
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.headerTitle}>Home</Text>
+        <Text style={styles.headerSub}>Track and manage your parcels</Text>
+      </View>
+
+      <View style={styles.searchSection}>
+        <View style={styles.searchContainer}>
+          <Search size={20} color={MUTED} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search parcels..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            placeholderTextColor={MUTED}
+          />
+        </View>
+      </View>
+
+      <View style={styles.tabContainer}>
+        {(['all', 'to-me', 'from-me'] as const).map((tab) => (
+          <Pressable
+            key={tab}
+            style={[styles.tab, activeTab === tab && styles.tabActive]}
+            onPress={() => setActiveTab(tab)}>
+            <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>
+              {tab === 'all' ? 'All' : tab === 'to-me' ? 'To Me' : 'From Me'}
+            </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <ScrollView 
+        style={styles.content} 
+        contentContainerStyle={styles.contentContainer}
+        showsVerticalScrollIndicator={false}
+      >
+        {filteredShipments.length > 0 ? (
+          filteredShipments.map((shipment) => (
+            <ShipmentCard key={shipment.id} shipment={shipment} />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIcon}>
+              <Package size={48} color={MUTED} />
+            </View>
+            <Text style={styles.emptyTitle}>No parcels found</Text>
+            <Text style={styles.emptyText}>
+              {searchQuery 
+                ? `No results for "${searchQuery}"`
+                : activeTab === 'all' 
+                  ? "You don't have any parcels yet" 
+                  : activeTab === 'to-me' 
+                    ? "No parcels coming to you" 
+                    : "You haven't sent any parcels"}
+            </Text>
+          </View>
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  tabBarWrap: {
-    position: 'relative',
-    backgroundColor: 'transparent',
-    borderTopWidth: 0,
-    height: 78,
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 14 : 12,
+  container: {
+    flex: 1,
+    backgroundColor: BG,
   },
-  tabBarSurface: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: BAR_BG,
-    borderTopWidth: 1,
-    borderTopColor: BAR_BORDER,
-    shadowColor: '#0B1220',
-    shadowOpacity: 0.06,
-    shadowRadius: 18,
-    shadowOffset: { width: 0, height: -10 },
-    elevation: 10,
+  header: {
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 16,
   },
-  row: {
+  headerTitle: {
+    fontSize: 32,
+    fontWeight: '900',
+    color: TEXT,
+    letterSpacing: -0.5,
+  },
+  headerSub: {
+    marginTop: 4,
+    fontSize: 14,
+    fontWeight: '600',
+    color: MUTED,
+  },
+  searchSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 12,
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: TEXT,
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 8,
+    marginBottom: 20,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 10,
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: BORDER,
+  },
+  tabActive: {
+    backgroundColor: GREEN,
+    borderColor: GREEN,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: TEXT,
+  },
+  tabTextActive: {
+    color: '#FFFFFF',
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    flexGrow: 1,
+    paddingHorizontal: 20,
+    paddingBottom: 40,
+    gap: 12,
+  },
+  card: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: BORDER,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    marginBottom: 16,
+  },
+  trackingInfo: {
+    gap: 2,
+  },
+  trackingLabel: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: MUTED,
+    textTransform: 'uppercase',
+  },
+  trackingId: {
+    fontSize: 15,
+    fontWeight: '800',
+    color: TEXT,
+  },
+  badge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    gap: 4,
+  },
+  badgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  routeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#F9FAFB',
+    padding: 12,
+    borderRadius: 12,
+    gap: 8,
+    marginBottom: 16,
+  },
+  routePoint: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
+    gap: 8,
   },
-  item: {
+  routeText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: TEXT,
+    flex: 1,
+  },
+  routeArrow: {
+    paddingHorizontal: 4,
+  },
+  cardFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 12,
+  },
+  dateText: {
+    fontSize: 12,
+    color: MUTED,
+    fontWeight: '500',
+  },
+  typeText: {
+    fontSize: 12,
+    color: GREEN,
+    fontWeight: '700',
+  },
+  emptyState: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
+    paddingVertical: 60,
   },
-  itemPressed: {
-    opacity: 0.92,
-  },
-  iconCapsule: {
-    width: 46,
-    height: 32,
-    borderRadius: 16,
+  emptyIcon: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(107, 114, 128, 0.1)',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 4,
+    marginBottom: 20,
   },
-  iconCapsuleActive: {
-    backgroundColor: 'rgba(52,182,122,0.14)',
-    borderWidth: 1,
-    borderColor: 'rgba(52,182,122,0.22)',
+  emptyTitle: {
+    fontSize: 20,
+    fontWeight: '700',
+    color: TEXT,
+    marginBottom: 8,
   },
-  iconCapsuleIdle: {
-    backgroundColor: 'transparent',
-    borderWidth: 1,
-    borderColor: 'transparent',
-  },
-  label: {
-    fontSize: 11.5,
-    fontWeight: '800',
-    letterSpacing: 0.1,
-  },
-  labelActive: {
-    color: GREEN,
-  },
-  labelIdle: {
-    color: INACTIVE,
+  emptyText: {
+    fontSize: 15,
+    color: MUTED,
+    textAlign: 'center',
+    maxWidth: 280,
   },
 });
