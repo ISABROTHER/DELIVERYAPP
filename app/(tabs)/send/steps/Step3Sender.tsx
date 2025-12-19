@@ -1,135 +1,59 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, ScrollView, KeyboardAvoidingView, Platform } from 'react-native';
+import { View, Text, TextInput, StyleSheet, ScrollView } from 'react-native';
 import { StepHeader } from '../components/StepHeader';
-import { PriceSummary } from '../components/PriceSummary';
 import { ContinueButton } from '../components/ContinueButton';
-import { useSendParcel, SenderInfo } from '../context/SendParcelContext';
-import {
-  validatePhoneNumber,
-  validateEmail,
-  validatePostalCode,
-  validateName,
-  validateAddress,
-} from '../utils/validators';
-import { formatPhoneNumber, formatPostalCode } from '../utils/formatters';
+import { PriceSummary } from '../components/PriceSummary';
+import { useSendParcel } from '../context/SendParcelContext';
+import { User } from 'lucide-react-native';
 
-type Step3SenderProps = {
-  onNext: () => void;
-};
-
-export const Step3Sender = ({ onNext }: Step3SenderProps) => {
+export const Step3Sender = ({ onNext }: { onNext: () => void }) => {
   const { sender, updateSender } = useSendParcel();
-
-  const [phone, setPhone] = useState(sender?.phone || '');
   const [name, setName] = useState(sender?.name || '');
-  const [address, setAddress] = useState(sender?.address || '');
-  const [postalCode, setPostalCode] = useState(sender?.postalCode || '');
-  const [city, setCity] = useState(sender?.city || '');
-  const [email, setEmail] = useState(sender?.email || '');
-
-  const isValid =
-    validatePhoneNumber(phone) &&
-    validateName(name) &&
-    validateAddress(address) &&
-    validatePostalCode(postalCode) &&
-    city.trim().length > 0 &&
-    validateEmail(email);
+  const [phone, setPhone] = useState(sender?.phone || '');
 
   const handleContinue = () => {
-    if (isValid) {
-      const senderInfo: SenderInfo = {
-        phone,
-        name,
-        address,
-        postalCode,
-        city,
-        email,
-      };
-      updateSender(senderInfo);
+    if (name && phone) {
+      updateSender({ name, phone });
       onNext();
     }
   };
 
-  return (
-    <KeyboardAvoidingView
-      style={styles.container}
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      keyboardVerticalOffset={0}
-    >
-      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
-        <StepHeader title="Sender Information" subtitle="Enter your details" />
+  const canContinue = name.length > 2 && phone.length >= 10;
 
-        <View style={styles.form}>
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Phone number</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="+47"
-              value={phone}
-              onChangeText={(text) => setPhone(formatPhoneNumber(text))}
-              keyboardType="phone-pad"
-              autoComplete="tel"
-            />
+  return (
+    <View style={styles.container}>
+      <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+        <StepHeader
+          title="Sender Details"
+          subtitle="Who is sending this parcel?"
+        />
+
+        <View style={styles.card}>
+          <View style={styles.cardHeader}>
+            <User size={20} color="#34B67A" />
+            <Text style={styles.cardTitle}>Your Information</Text>
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Name</Text>
+            <Text style={styles.label}>Full Name *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Your name"
               value={name}
               onChangeText={setName}
-              autoComplete="name"
+              placeholder="Enter your name"
+              placeholderTextColor="#9CA3AF"
             />
           </View>
 
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Address</Text>
+            <Text style={styles.label}>Phone Number *</Text>
             <TextInput
               style={styles.input}
-              placeholder="Street address"
-              value={address}
-              onChangeText={setAddress}
-              autoComplete="street-address"
-            />
-          </View>
-
-          <View style={styles.row}>
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>Postal code</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="0000"
-                value={postalCode}
-                onChangeText={(text) => setPostalCode(formatPostalCode(text))}
-                keyboardType="number-pad"
-                maxLength={4}
-                autoComplete="postal-code"
-              />
-            </View>
-
-            <View style={[styles.inputGroup, styles.halfWidth]}>
-              <Text style={styles.label}>City</Text>
-              <TextInput
-                style={styles.input}
-                placeholder="City"
-                value={city}
-                onChangeText={setCity}
-                autoComplete="off"
-              />
-            </View>
-          </View>
-
-          <View style={styles.inputGroup}>
-            <Text style={styles.label}>Email</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="your@email.com"
-              value={email}
-              onChangeText={setEmail}
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
+              value={phone}
+              onChangeText={setPhone}
+              placeholder="e.g., 024 000 0000"
+              keyboardType="phone-pad"
+              placeholderTextColor="#9CA3AF"
             />
           </View>
         </View>
@@ -137,47 +61,35 @@ export const Step3Sender = ({ onNext }: Step3SenderProps) => {
         <PriceSummary />
       </ScrollView>
 
-      <ContinueButton onPress={handleContinue} disabled={!isValid} />
-    </KeyboardAvoidingView>
+      <ContinueButton onPress={handleContinue} disabled={!canContinue} />
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  content: {
-    flex: 1,
-  },
-  form: {
-    paddingHorizontal: 18,
+  container: { flex: 1 },
+  content: { flex: 1 },
+  card: {
+    marginHorizontal: 18,
     marginBottom: 20,
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  label: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0B1220',
-    marginBottom: 8,
-  },
-  input: {
+    padding: 16,
     backgroundColor: 'rgba(255,255,255,0.62)',
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.55)',
+  },
+  cardHeader: { flexDirection: 'row', alignItems: 'center', marginBottom: 16, gap: 8 },
+  cardTitle: { fontSize: 17, fontWeight: '900', color: '#0B1220' },
+  inputGroup: { marginBottom: 16 },
+  label: { fontSize: 14, fontWeight: '700', color: '#6B7280', marginBottom: 8 },
+  input: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2,
+    borderColor: 'rgba(0,0,0,0.08)',
     borderRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
+    padding: 14,
     fontSize: 15,
-    fontWeight: '600',
+    fontWeight: '700',
     color: '#0B1220',
-  },
-  row: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  halfWidth: {
-    flex: 1,
   },
 });
