@@ -36,30 +36,24 @@ export const ContinueButton = ({
 const styles = StyleSheet.create({
   button: {
     backgroundColor: '#34B67A',
-    paddingVertical: 16,
+    paddingVertical: 14,
     paddingHorizontal: 24,
-    borderRadius: 14,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#34B67A',
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 4,
+    marginHorizontal: 18,
+    // Removed large bottom margin to allow tight positioning
   },
   buttonDisabled: {
-    backgroundColor: '#D1D5DB', // Solid gray for better visibility on Android
-    shadowOpacity: 0,
-    elevation: 0,
+    backgroundColor: '#D1D5DB',
   },
   buttonPressed: {
     opacity: 0.9,
     transform: [{ scale: 0.98 }],
   },
   buttonText: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: '900',
     color: '#FFFFFF',
-    letterSpacing: 0.2,
   },
 });
